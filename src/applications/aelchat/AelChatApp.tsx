@@ -47,7 +47,6 @@ export const AelChatApp: React.FC = () => {
 
   // ────────────── DAY 2 AELCHAT APP STATE ──────────────
   const [visibleMsgCount, setVisibleMsgCount] = useState<number>(1);
-  const [chatSpeed, setChatSpeed] = useState<'normal' | 'fast' | 'paused'>('normal');
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [drawerTab, setDrawerTab] = useState<'members' | 'files'>('members');
   const [selectedMemberProfile, setSelectedMemberProfile] = useState<ChatMember | null>(null);
@@ -106,9 +105,8 @@ export const AelChatApp: React.FC = () => {
   useEffect(() => {
     if (activeContact !== 'group') return;
     if (visibleMsgCount >= scenario2.messages.length) return;
-    if (chatSpeed === 'paused') return;
 
-    const delay = chatSpeed === 'fast' ? 1000 : 4000;
+    const delay = 4000;
     
     // Trigger typing indicator 1.5s before message renders
     const typingTimer = setTimeout(() => {
@@ -131,7 +129,7 @@ export const AelChatApp: React.FC = () => {
       clearTimeout(typingTimer);
       clearTimeout(nextMsgTimer);
     };
-  }, [visibleMsgCount, chatSpeed, activeContact, gameState.soundEnabled]);
+  }, [visibleMsgCount, activeContact, gameState.soundEnabled]);
 
   // ────────────── DAY 2 EVIDENCE PINNING ANIMATION ──────────────
   const handleCollectEvidence = (evidenceId: string, _label: string, e: React.MouseEvent) => {
@@ -244,21 +242,20 @@ export const AelChatApp: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '6px' }}>
           {/* Group Chat Case 2 */}
           <div
-                onClick={() => { setActiveContact('group'); playSound.click(gameState.soundEnabled); }}
-                style={{
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  background: activeContact === 'group' ? 'white' : 'transparent',
-                  borderLeft: activeContact === 'group' ? '3px solid #3b82f6' : '3px solid transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}
-              >
+            style={{
+              padding: '8px',
+              borderRadius: '8px',
+              background: activeContact === 'group' ? 'white' : 'transparent',
+              borderLeft: activeContact === 'group' ? '3px solid #3b82f6' : '3px solid transparent',
+            }}
+          >
+            <div
+              onClick={() => { setActiveContact('group'); playSound.click(gameState.soundEnabled); }}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+            >
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#0369a1', position: 'relative' }}>
                   <Users size={16} />
-                  {visibleMsgCount < scenario2.messages.length && chatSpeed !== 'paused' && (
+                  {visibleMsgCount < scenario2.messages.length && (
                     <div style={{ position: 'absolute', top: 0, right: 0, width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
                   )}
                 </div>
@@ -268,12 +265,39 @@ export const AelChatApp: React.FC = () => {
                     Carolina: {scenario2.messages[visibleMsgCount - 1]?.text}
                   </div>
                 </div>
-              </div>
+            </div>
+
+            <button
+              type="button"
+              aria-expanded={isDrawerOpen}
+              className={'retro-btn ' + (isDrawerOpen ? 'primary' : '')}
+              onClick={() => {
+                setActiveContact('group');
+                setIsDrawerOpen(!isDrawerOpen);
+                playSound.click(gameState.soundEnabled);
+              }}
+              style={{
+                width: '100%',
+                marginTop: '8px',
+                padding: '6px 9px',
+                justifyContent: 'center',
+                gap: '6px',
+                fontSize: '0.7rem',
+                position: 'relative',
+              }}
+            >
+              <Info size={13} />
+              <span>Info del grupo</span>
+              {mitigationPhase && !completedMitigations.has('eliminar-archivo') && (
+                <div style={{ position: 'absolute', top: -3, right: -3, width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', animation: 'pulse 1.5s infinite' }} />
+              )}
+            </button>
+          </div>
 
           {/* Javiera DM - appears during mitigation phase */}
           {mitigationPhase && (
             <div
-                  onClick={() => { setActiveContact('javiera-dm'); playSound.click(gameState.soundEnabled); }}
+                  onClick={() => { setActiveContact('javiera-dm'); setIsDrawerOpen(false); playSound.click(gameState.soundEnabled); }}
                   style={{
                     padding: '10px 12px',
                     borderRadius: '8px',
@@ -320,46 +344,6 @@ export const AelChatApp: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {activeContact === 'group' && (
-                /* Speed Controls */
-                <div style={{ display: 'flex', background: '#f1f5f9', padding: '2px', borderRadius: '6px', border: '1px solid #e2e8f0', marginRight: '6px' }}>
-                  <button
-                    onClick={() => { setChatSpeed('normal'); playSound.click(gameState.soundEnabled); }}
-                    style={{ background: chatSpeed === 'normal' ? 'white' : 'transparent', border: 'none', padding: '3px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold', color: chatSpeed === 'normal' ? '#3b82f6' : '#64748b', cursor: 'pointer' }}
-                    title="Velocidad normal"
-                  >
-                    1x
-                  </button>
-                  <button
-                    onClick={() => { setChatSpeed('fast'); playSound.click(gameState.soundEnabled); }}
-                    style={{ background: chatSpeed === 'fast' ? 'white' : 'transparent', border: 'none', padding: '3px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold', color: chatSpeed === 'fast' ? '#3b82f6' : '#64748b', cursor: 'pointer' }}
-                    title="Acelerar mensajes"
-                  >
-                    2x
-                  </button>
-                  <button
-                    onClick={() => { setChatSpeed('paused'); playSound.click(gameState.soundEnabled); }}
-                    style={{ background: chatSpeed === 'paused' ? 'white' : 'transparent', border: 'none', padding: '3px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 'bold', color: chatSpeed === 'paused' ? '#3b82f6' : '#64748b', cursor: 'pointer' }}
-                    title="Pausar flujo"
-                  >
-                    Pausa
-                  </button>
-                </div>
-              )}
-
-              <button
-                className={'retro-btn ' + (isDrawerOpen ? 'primary' : '')}
-                style={{ padding: '4px 8px', gap: '4px', fontSize: '0.72rem', position: 'relative' }}
-                onClick={() => { setIsDrawerOpen(!isDrawerOpen); playSound.click(gameState.soundEnabled); }}
-              >
-                <Info size={12} />
-                <span>Información</span>
-                {mitigationPhase && !completedMitigations.has('eliminar-archivo') && (
-                  <div style={{ position: 'absolute', top: -3, right: -3, width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', animation: 'pulse 1.5s infinite' }} />
-                )}
-              </button>
-          </div>
         </div>
 
         {/* MITIGATION PHASE HUD */}

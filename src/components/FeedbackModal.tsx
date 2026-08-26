@@ -53,6 +53,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
 
   return (
     <div
+      className="feedback-modal-backdrop"
       style={{
         position: 'fixed',
         inset: 0,
@@ -67,7 +68,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
       }}
     >
       <div
-        className="bevel-raised"
+        className="bevel-raised feedback-modal-card"
         style={{
           width: '560px',
           maxWidth: '95vw',

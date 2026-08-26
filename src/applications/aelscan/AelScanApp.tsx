@@ -13,6 +13,7 @@ import {
   CASE2_INFRACTION_RULES_BY_EVIDENCE,
 } from '../../content/evidenceRules';
 import { AELSCAN_PIN_EVIDENCE_EVENT, AELSCAN_SHOW_REGULATIONS_EVENT } from '../../components/aelScanNavigation';
+import Case4AelScan from './Case4AelScan';
 
 interface Pillar {
   id: number;
@@ -424,7 +425,7 @@ const getEvidenceElementName = (id: string): string => {
 
 type GadgetTab = 'reglamento' | 'guia';
 
-export const AelScanApp: React.FC = () => {
+const LegacyAelScanApp: React.FC = () => {
   const {
     state: gameState,
     foundEvidence,
@@ -766,12 +767,12 @@ export const AelScanApp: React.FC = () => {
       </div>
 
       {/* Progress bar */}
-      <div style={{ height: '3px', background: '#e2e8f0', flexShrink: 0 }}>
+      <div className="aelscan-progress" style={{ height: '3px', background: '#e2e8f0', flexShrink: 0 }}>
         <div style={{ height: '100%', width: progressPct + '%', background: progressPct === 100 ? '#34d399' : isDay2 ? 'linear-gradient(90deg, #84cc16, #facc15)' : '#3b82f6', transition: 'width 0.4s ease' }} />
       </div>
 
       {/* COMPLIANCE COMPARISON ENGINE WORKSPACE (STRICTLY FIXED HEIGHT: 65px) */}
-      <div id="scan-comparison-module" style={{ padding: '6px 10px', background: '#f1f5f9', borderBottom: '1px solid #cbd5e1', flexShrink: 0, height: '65px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div id="scan-comparison-module" className="aelscan-comparison" style={{ padding: '6px 10px', background: '#f1f5f9', borderBottom: '1px solid #cbd5e1', flexShrink: 0, height: '65px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '3px', letterSpacing: '0.3px' }}>
           Módulo de Confrontación
         </div>
@@ -811,13 +812,14 @@ export const AelScanApp: React.FC = () => {
       </div>
 
       {/* Tabs Menu */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: 'white', flexShrink: 0 }}>
+      <div className="aelscan-tabs" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: 'white', flexShrink: 0 }}>
         <button style={tabStyle('reglamento')} onClick={() => { setActiveTab('reglamento'); playSound.click(gameState.soundEnabled); }}><BookOpen size={12} />Reglamento</button>
         <button style={tabStyle('guia')} onClick={() => { setActiveTab('guia'); playSound.click(gameState.soundEnabled); }}><GuideIcon size={12} />Guía</button>
       </div>
 
       {/* Tab Contents */}
       <div
+        className="aelscan-content"
         onScroll={hideRuleClue}
         style={{ flex: 1, overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}
       >
@@ -899,7 +901,7 @@ export const AelScanApp: React.FC = () => {
         {/* TAB 2: GUIA */}
         {activeTab === 'guia' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div style={{ background: 'linear-gradient(135deg,#eff6ff,#f5f3ff)', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '8px 10px', fontSize: '0.72rem', color: '#1e40af', lineHeight: '1.35' }}>
+            <div className="aelscan-guide-note" style={{ background: 'linear-gradient(135deg,#eff6ff,#f5f3ff)', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '8px 10px', fontSize: '0.72rem', color: '#1e40af', lineHeight: '1.35' }}>
               <strong>📋 Protocolo del Auditor</strong><br />
               Sigue las instrucciones para resolver el caso.
             </div>
@@ -911,8 +913,8 @@ export const AelScanApp: React.FC = () => {
                 { n: '2', title: 'Comprobación automática', desc: 'El sistema verificará de inmediato si coincide. El diagnóstico flotante se abrirá solo.' },
                 { n: '3', title: 'Sigue el checklist', desc: 'Pon el cursor sobre cada pilar para ver qué hallazgos faltan y cuáles ya documentaste.' }
               ].map(step => (
-                <div key={step.n} style={{ display: 'flex', gap: '6px', padding: '6px 8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', fontSize: '0.65rem', fontWeight: 900, flexShrink: 0, justifyContent: 'center' }}>
+                <div key={step.n} className="aelscan-guide-step" style={{ display: 'flex', gap: '6px', padding: '6px 8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                  <div className="aelscan-guide-step__number" style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', fontSize: '0.65rem', fontWeight: 900, flexShrink: 0, justifyContent: 'center' }}>
                     {step.n}
                   </div>
                   <div>
@@ -928,8 +930,8 @@ export const AelScanApp: React.FC = () => {
                 { n: '2', title: 'Documenta cada evidencia', desc: 'Cada elemento confirmado registra una infracción independiente, aunque pueda relacionarse con más de un pilar.' },
                 { n: '3', title: 'Prepara el plan final', desc: 'Al resolver las 7 infracciones, El Chat habilitará las acciones para cerrar el caso.' }
               ].map(step => (
-                <div key={step.n} style={{ display: 'flex', gap: '6px', padding: '6px 8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', fontSize: '0.65rem', fontWeight: 900, flexShrink: 0, justifyContent: 'center' }}>
+                <div key={step.n} className="aelscan-guide-step" style={{ display: 'flex', gap: '6px', padding: '6px 8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
+                  <div className="aelscan-guide-step__number" style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', fontSize: '0.65rem', fontWeight: 900, flexShrink: 0, justifyContent: 'center' }}>
                     {step.n}
                   </div>
                   <div>
@@ -1072,6 +1074,11 @@ export const AelScanApp: React.FC = () => {
       </AnimatePresence>
     </div>
   );
+};
+
+export const AelScanApp: React.FC = () => {
+  const { state: gameState } = useGameState();
+  return gameState.currentDay === 4 ? <Case4AelScan /> : <LegacyAelScanApp />;
 };
 
 export default AelScanApp;

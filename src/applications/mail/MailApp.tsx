@@ -7,6 +7,7 @@ import { playSound } from '../../components/sound';
 import { beginEvidenceDrag, endEvidenceDrag } from '../../components/evidenceDrag';
 import { CASE1_INFRACTION_RULES_BY_ELEMENT, getRuleTokens } from '../../content/evidenceRules';
 import { showAelScanRegulations } from '../../components/aelScanNavigation';
+import ScheduledMailCase from './ScheduledMailCase';
 
 export const MailApp: React.FC = () => {
   const { state: gameState, setSelectedAuditElement, makeDecision } = useGameState();
@@ -71,6 +72,8 @@ export const MailApp: React.FC = () => {
     playSound.click(gameState.soundEnabled);
   };
 
+  if (gameState.currentDay === 4) return <ScheduledMailCase />;
+
   return (
     <div className="ael-app mail-app" style={{ display: 'flex', height: '100%', width: '100%', background: '#f8fafc' }}>
       {/* Mail folder sidebar */}
@@ -85,6 +88,7 @@ export const MailApp: React.FC = () => {
           return (
             <div
               key={email.id}
+              className={`mail-list-item ${isSelected ? 'is-selected' : ''}`}
               onClick={() => { setSelectedMailId(email.id); playSound.click(gameState.soundEnabled); }}
               style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', cursor: 'pointer', background: isSelected ? '#eff6ff' : 'transparent', borderLeft: isSelected ? '3px solid #3b82f6' : '3px solid transparent', fontWeight: isUnread ? 700 : 400 }}>
               <div style={{ fontSize: '0.72rem', display: 'flex', justifyContent: 'space-between' }}>
@@ -100,7 +104,7 @@ export const MailApp: React.FC = () => {
       {/* Reading pane */}
       <div className="app-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'white' }}>
         {/* Header */}
-        <div style={{ padding: '12px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.83rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div className="mail-reading-header" style={{ padding: '12px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontSize: '0.83rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <div style={{ fontSize: '0.98rem', fontWeight: 700, color: '#1e293b', marginBottom: '2px' }}>
             <span
               id="email-subject-header"
@@ -189,7 +193,7 @@ export const MailApp: React.FC = () => {
         )}
 
         {/* Body */}
-        <div style={{ flex: 1, whiteSpace: 'pre-line', fontFamily: 'var(--font-sans)', fontSize: '0.9rem', lineHeight: '1.7', color: '#334155', padding: '16px' }}>
+        <div className="mail-reading-body" style={{ flex: 1, whiteSpace: 'pre-line', fontFamily: 'var(--font-sans)', fontSize: '0.9rem', lineHeight: '1.7', color: '#334155', padding: '16px' }}>
           <p>{currentEmail.body}</p>
 
           {/* Attachment card */}
@@ -199,9 +203,9 @@ export const MailApp: React.FC = () => {
                 Archivos Adjuntos:
               </span>
               <div
-                onClick={() => { openWindow('spreadsheet'); playSound.click(gameState.soundEnabled); }}
+                onClick={(event) => { event.stopPropagation(); openWindow('spreadsheet'); playSound.click(gameState.soundEnabled); }}
                 style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', maxWidth: '320px', transition: 'border 0.2s' }}
-                className="hover-card"
+                className="hover-card mail-attachment-card"
               >
                 <div style={{ color: '#10b981' }}>
                   <FileSpreadsheet size={24} />

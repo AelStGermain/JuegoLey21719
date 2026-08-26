@@ -42,16 +42,6 @@ const DEFAULT_WINDOWS: WindowState[] = [
     zIndex: 1,
     position: { x: 140, y: 100 },
     size: { width: 680, height: 540 }
-  },
-  {
-    id: 'aelforms',
-    title: 'AelForms - Editor de Formularios',
-    isOpen: false,
-    isMinimized: false,
-    isMaximized: false,
-    zIndex: 1,
-    position: { x: 105, y: 38 },
-    size: { width: 820, height: 590 }
   }
 ];
 

@@ -115,7 +115,7 @@ export const Window: React.FC<WindowProps> = ({ id, children }) => {
 
   return (
     <div
-      className="bevel-raised animate-open"
+      className={`bevel-raised animate-open app-window app-window--${id} ${win.isMaximized ? 'is-maximized' : ''}`}
       style={{
         ...windowStyle,
         display: isHidden ? 'none' : 'flex',

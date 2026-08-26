@@ -9,8 +9,6 @@ import {
   RefreshCw,
   LayoutGrid,
   MessageSquare,
-  ClipboardList,
-  Lightbulb,
 } from 'lucide-react';
 import { playSound } from '../components/sound';
 import Window from '../components/Window';
@@ -20,14 +18,14 @@ import MailApp from '../applications/mail/MailApp';
 import SpreadsheetApp from '../applications/spreadsheet/SpreadsheetApp';
 import AelScanApp from '../applications/aelscan/AelScanApp';
 import AelChatApp from '../applications/aelchat/AelChatApp';
-import AelFormsApp from '../applications/aelforms/AelFormsApp';
 import { scenario1 } from '../content/scenario_1';
 import {
   CASE1_INFRACTION_RULES_BY_ELEMENT,
   CASE2_FINDING_IDS,
 } from '../content/evidenceRules';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getCaseApplicationIds, isApplicationAvailableInCase } from './caseApplications';
+import { getCaseApplicationIds, getCaseProgressPosition, isApplicationAvailableInCase } from './caseApplications';
+import { useCase4 } from '../game/Case4Context';
 
 // Animated Bezier Connection Overlay
 const ConnectionOverlay: React.FC<{
@@ -167,6 +165,7 @@ const ConnectionOverlay: React.FC<{
 
 export const Desktop: React.FC = () => {
   const { state: windowManagerState, openWindow, closeWindow, focusWindow, autoArrange } = useWindowManager();
+  const { state: case4State, resetCase4 } = useCase4();
   const {
     state: gameState,
     toggleSound,
@@ -213,13 +212,11 @@ export const Desktop: React.FC = () => {
         openWindow('mail');
       } else if (gameState.currentDay === 2) {
         closeWindow('mail');
-        closeWindow('aelforms');
         openWindow('aelchat');
-      } else if (gameState.currentDay === 3) {
-        closeWindow('mail');
+      } else if (gameState.currentDay === 4) {
         closeWindow('aelchat');
         closeWindow('spreadsheet');
-        openWindow('aelforms');
+        openWindow('mail');
       }
     }
   }, [gameState.currentDay, gameState.workdayStatus, closeWindow, openWindow]);
@@ -257,20 +254,21 @@ export const Desktop: React.FC = () => {
     playSound.chime(gameState.soundEnabled);
   };
 
-  const handleNextCase3 = () => {
-    progressDay(3, {
-      id: 'case3-form-request',
-      title: 'Nuevo borrador · Revisión solicitada',
-      message: 'RRHH necesita revisar el formulario Actualización de Datos y Bienestar 2026 antes de publicarlo mañana.',
-      appToOpen: 'aelforms',
-    }, { case3Started: true });
-    openWindow('aelforms');
+  const handleNextCase4 = () => {
+    resetCase4();
+    progressDay(4, {
+      id: 'case4-scheduled-mail',
+      title: 'Envío programado pendiente de revisión',
+      message: 'RRHH programó una comunicación masiva. AelMail espera tu revisión antes de iniciar la cuenta regresiva.',
+      appToOpen: 'mail',
+    }, { case4Started: true });
+    openWindow('mail');
     playSound.chime(gameState.soundEnabled);
   };
 
   // Cheerful, vibrant wallpaper styles changing per case/day
   const isDay2 = gameState.currentDay === 2;
-  const isDay3 = gameState.currentDay === 3;
+  const isDay4 = gameState.currentDay === 4;
   const documentedCase2FindingCount = CASE2_FINDING_IDS.filter(id => gameState.evidenceFound.includes(id)).length;
   const isMilestoneNotification = gameState.activeNotification?.id.startsWith('milestone-') ?? false;
   const case1AuditComplete = scenario1.evidences.every(evidence => gameState.evidenceFound.includes(evidence.id));
@@ -377,7 +375,6 @@ export const Desktop: React.FC = () => {
     mail: { label: 'AelMail', Icon: Mail },
     spreadsheet: { label: 'AelSheet', Icon: FileSpreadsheet },
     aelchat: { label: 'AelChat', Icon: MessageSquare },
-    aelforms: { label: 'AelForms', Icon: ClipboardList },
   };
   const wallpaperStyle: React.CSSProperties = {
     position: 'fixed',
@@ -389,26 +386,26 @@ export const Desktop: React.FC = () => {
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: isDay3 ? '#5ea88b' : isDay2 ? '#8b5cf6' : '#3b82f6',
-    backgroundImage: isDay3
+    backgroundColor: isDay4 ? '#287d83' : isDay2 ? '#8b5cf6' : '#3b82f6',
+    backgroundImage: isDay4
       ? [
-        'radial-gradient(circle at 16% 82%, rgba(250,204,21,0.52) 0%, transparent 36%)',
-        'radial-gradient(circle at 82% 14%, rgba(163,230,53,0.44) 0%, transparent 34%)',
-        'linear-gradient(135deg, #6ee7b7 0%, #60a5fa 52%, #a78bfa 100%)',
+        'radial-gradient(circle at 15% 80%, rgba(250,204,21,0.48) 0%, transparent 35%)',
+        'radial-gradient(circle at 84% 14%, rgba(251,146,60,0.42) 0%, transparent 34%)',
+        'linear-gradient(135deg, #176b7a 0%, #2f8f89 48%, #5966a6 100%)',
       ].join(', ')
       : isDay2
-      ? [
-        'radial-gradient(circle at 12% 82%, rgba(163,230,53,0.62) 0%, transparent 38%)',
-        'radial-gradient(circle at 82% 12%, rgba(250,204,21,0.48) 0%, transparent 36%)',
-        'radial-gradient(circle at 52% 48%, rgba(255,255,255,0.18) 0%, transparent 54%)',
-        'linear-gradient(135deg, #84cc16 0%, #facc15 20%, #c084fc 55%, #818cf8 100%)',
-      ].join(', ')
-      : [
-        'radial-gradient(circle at 14% 84%, rgba(163,230,53,0.35) 0%, transparent 38%)',
-        'radial-gradient(circle at 86% 14%, rgba(250,204,21,0.3) 0%, transparent 36%)',
-        'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 58%)',
-        'linear-gradient(135deg, #22d3ee 0%, #3b82f6 56%, #818cf8 100%)',
-      ].join(', '),
+        ? [
+          'radial-gradient(circle at 12% 82%, rgba(163,230,53,0.62) 0%, transparent 38%)',
+          'radial-gradient(circle at 82% 12%, rgba(250,204,21,0.48) 0%, transparent 36%)',
+          'radial-gradient(circle at 52% 48%, rgba(255,255,255,0.18) 0%, transparent 54%)',
+          'linear-gradient(135deg, #84cc16 0%, #facc15 20%, #c084fc 55%, #818cf8 100%)',
+        ].join(', ')
+        : [
+          'radial-gradient(circle at 14% 84%, rgba(163,230,53,0.35) 0%, transparent 38%)',
+          'radial-gradient(circle at 86% 14%, rgba(250,204,21,0.3) 0%, transparent 36%)',
+          'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, transparent 58%)',
+          'linear-gradient(135deg, #22d3ee 0%, #3b82f6 56%, #818cf8 100%)',
+        ].join(', '),
   };
 
   return (
@@ -451,7 +448,6 @@ export const Desktop: React.FC = () => {
               { id: 'mail', label: 'AelMail', Icon: Mail, color: '#22d3ee' },
               { id: 'aelchat', label: 'AelChat', Icon: MessageSquare, color: '#a78bfa' },
               { id: 'spreadsheet', label: 'AelSheet', Icon: FileSpreadsheet, color: '#34d399' },
-              { id: 'aelforms', label: 'AelForms', Icon: ClipboardList, color: '#d8ee78' },
             ].filter(app => isApplicationAvailableInCase(gameState.currentDay, app.id)).map(({ id, label, Icon, color }) => (
               <button
                 key={id}
@@ -488,17 +484,12 @@ export const Desktop: React.FC = () => {
                   <AelChatApp />
                 </Window>
               )}
-              {isApplicationAvailableInCase(gameState.currentDay, 'aelforms') && (
-                <Window id="aelforms">
-                  <AelFormsApp />
-                </Window>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Right: AelScan fixed gadget panel (Cases 1 and 2 only) */}
-        {!isDay3 && <div
+        {/* Right: AelScan fixed gadget panel */}
+        <div
           className="aelscan-shell"
           style={{
             width: '280px',
@@ -512,47 +503,7 @@ export const Desktop: React.FC = () => {
           }}
         >
           <AelScanApp />
-        </div>}
-
-        {isDay3 && (
-          <aside className="case3-guide" aria-label="Guía rápida del Caso 3">
-            <div className="case3-guide__intro">
-              <span className="case3-guide__icon"><ClipboardList size={22} /></span>
-              <span className="case3-guide__eyebrow">CASO 3 · GUÍA RÁPIDA</span>
-              <h2>Revisa y corrige</h2>
-              <p>Haz clic en una pregunta. Si presenta un riesgo, verás una explicación y la corrección que puedes aplicar.</p>
-            </div>
-
-            <div className="case3-guide__concept" aria-label="Pregunta, pilar y corrección">
-              <div><span>PASO 1</span><strong>PREGUNTA</strong></div>
-              <b>→</b>
-              <div><span>PASO 2</span><strong>PILAR</strong></div>
-              <b>→</b>
-              <div><span>PASO 3</span><strong>CORRECCIÓN</strong></div>
-            </div>
-
-            <strong className="case3-guide__section-title">CÓMO SE JUEGA</strong>
-            <ul className="case3-guide__goals">
-              <li>
-                <span />
-                <p>Selecciona las preguntas que te parezcan objetables.</p>
-              </li>
-              <li>
-                <span />
-                <p>Lee qué pilar se compromete y por qué.</p>
-              </li>
-              <li>
-                <span />
-                <p>Aplica la corrección, prueba el formulario y envíalo.</p>
-              </li>
-            </ul>
-
-            <div className="case3-guide__tip">
-              <Lightbulb size={17} />
-              <div><strong>Datos administrativos</strong><span>Fecha de nacimiento y dirección ya forman parte del registro de la empresa, por lo que se mantienen.</span></div>
-            </div>
-          </aside>
-        )}
+        </div>
       </div>
 
       <AnimatePresence>
@@ -875,14 +826,10 @@ export const Desktop: React.FC = () => {
               Caso 2
             </button>
             <button
-              onClick={() => {
-                progressDay(3, null, { case3Started: true });
-                openWindow('aelforms');
-                playSound.chime(gameState.soundEnabled);
-              }}
+              onClick={handleNextCase4}
               style={{
-                background: gameState.currentDay === 3 ? '#d8ee78' : 'transparent',
-                color: gameState.currentDay === 3 ? '#365314' : '#64748b',
+                background: gameState.currentDay === 4 ? '#f3cf55' : 'transparent',
+                color: gameState.currentDay === 4 ? '#273044' : '#64748b',
                 border: 'none',
                 padding: '2px 8px',
                 borderRadius: '4px',
@@ -892,7 +839,7 @@ export const Desktop: React.FC = () => {
                 transition: 'all 0.15s'
               }}
             >
-              Caso 3
+              Caso 4
             </button>
           </div>
 
@@ -911,13 +858,15 @@ export const Desktop: React.FC = () => {
               borderRadius: '4px',
             }}
           >
-            <span>DÍA {gameState.currentDay}/3</span>
+            <span>CASO {gameState.currentDay} · {getCaseProgressPosition(gameState.currentDay)}/3</span>
             <span>
               {gameState.currentDay === 1
                 ? `${gameState.evidenceFound.filter(id => id.startsWith('ev-') && !id.startsWith('ev-ch-')).length}/4 evidencias`
                 : gameState.currentDay === 2
                   ? `${documentedCase2FindingCount}/${CASE2_FINDING_IDS.length} resueltas`
-                  : gameState.evidenceFound.includes('lead-form-religion-resolved') ? 'hallazgo documentado' : 'revisión en curso'
+                  : case4State.evaluation
+                      ? `resultado ${case4State.evaluation.level}`
+                      : `${case4State.secondsRemaining}s · ${case4State.timerStatus === 'running' ? 'envío activo' : 'envío pausado'}`
               }
             </span>
           </div>
@@ -1068,39 +1017,39 @@ export const Desktop: React.FC = () => {
         ) : gameState.currentDay === 2 ? (
           <ExperienceScreen
             theme="case2"
-            eyebrow="MedVibe · Revisión previa"
-            title="RRHH te envió un borrador."
-            lead="Eres un trabajador de MedVibe y te piden revisar un formulario antes de enviarlo a toda la empresa. Esta vez el problema todavía no ocurrió: puedes corregir el proceso antes de publicarlo."
-            caseLabel="Caso 3 · Actualización de datos 2026"
-            caseTitle="Un formulario normal que pide demasiadas cosas."
-            description="Abre AelForms, selecciona las preguntas objetables y aplica la corrección explicada por el pilar correspondiente."
+            eyebrow="MedVibe · Último minuto"
+            title="Evita que este correo salga mal."
+            lead="RRHH está por enviar un aviso de pago a todo el personal. Hay tres cosas extrañas que debes encontrar antes de enviarlo."
+            caseLabel="Caso 4 · El correo equivocado"
+            caseTitle="Una revisión rápida antes de enviar."
+            description="Primero puedes mirar con calma. Cuando estés listo, inicia la revisión y comprueba quién lo recibirá, qué contiene y quién podrá verlo."
             steps={[
-              'Haz clic en una pregunta del formulario.',
-              'Lee el riesgo y aplica la corrección sugerida.',
-              'Prueba el resultado y envía el formulario a revisión.',
+              'Haz clic en los destinatarios y busca una dirección extraña.',
+              'Decide si 238 personas deben ver las direcciones de los demás.',
+              'Abre los dos adjuntos y conserva solo lo necesario.',
             ]}
-            tools={['AelForms']}
+            tools={['Mail', 'Excel', 'AelScan']}
             metrics={[
-              { value: '1', label: 'flujo vertical' },
-              { value: '2', label: 'pilares aplicables' },
-              { value: '3', label: 'revisar · corregir · probar' },
+              { value: '90 s', label: 'revisión normal' },
+              { value: '3', label: 'problemas ocultos' },
+              { value: '2', label: 'adjuntos' },
             ]}
-            continueLabel="Haz clic para comenzar el Caso 3"
-            onContinue={handleNextCase3}
+            continueLabel="Haz clic para abrir el correo pendiente"
+            onContinue={handleNextCase4}
           />
         ) : (
           <ExperienceScreen
             theme="complete"
             eyebrow="Auditoría finalizada · Bitácora guardada"
             title="Terminaste tu jornada."
-            lead="Revisaste tres situaciones que cualquier trabajador podría encontrar: información compartida, accesos desactualizados y un formulario que debía corregirse antes de publicar."
+            lead="Revisaste tres situaciones: información compartida, accesos desactualizados y un correo programado que podía exponer datos personales."
             caseLabel="Simulación completada"
-            caseTitle="Tres casos. Una forma más cuidadosa de actuar."
+            caseTitle="¡Simulación completada!"
             description="La mejor respuesta no paraliza el trabajo: reduce la exposición, deja registro y activa a quienes pueden corregir el problema."
             result={(
               <div className="experience-result">
                 <strong>✓ Medidas registradas</strong>
-                Los accesos y archivos fueron escalados, y el primer flujo de diseño del formulario quedó corregido y comprobado en Preview.
+                Los accesos, archivos y el correo programado quedaron revisados con medidas proporcionales a su finalidad y audiencia.
               </div>
             )}
             steps={[
@@ -1108,12 +1057,21 @@ export const Desktop: React.FC = () => {
               'Documentaste cada evidencia una sola vez y elegiste una respuesta proporcional.',
               'Completaste acciones que una persona puede realizar o solicitar en su trabajo diario.',
             ]}
-            tools={['Mail', 'Excel', 'Chat', 'AelForms', 'AelScan']}
+            tools={['Mail', 'Excel', 'Chat', 'AelScan']}
             metrics={[
               { value: '3/3', label: 'casos completados' },
-              { value: '12+', label: 'evidencias revisadas' },
+              { value: '14', label: 'evidencias revisadas' },
               { value: '100%', label: 'bitácora cerrada' },
             ]}
+            credit={{
+              name: 'Sofía Gómez',
+              label: 'AelStGermain',
+              href: 'https://github.com/AelStGermain',
+              portfolio: {
+                label: 'Ver portafolio',
+                href: 'https://aelstgermain.github.io/Aelita/',
+              },
+            }}
             continueLabel="Haz clic para volver a jugar"
             onContinue={() => {
               resetGame();

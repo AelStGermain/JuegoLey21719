@@ -83,22 +83,24 @@ describe('gameStateReducer', () => {
     expect(state.activeNotification).toBeNull();
   });
 
-  it('starts Case 3 without stale form findings or selections', () => {
-    const dirtyState: GameState = {
-      ...initialGameState,
-      currentDay: 2,
-      evidenceFound: ['ev-cc-leak', 'lead-form-religion-resolved', 'ev-form-religion'],
-      selectedAuditElement: { sourceApp: 'aelforms', elementId: 'ev-form-religion' },
-      selectedRuleId: 2,
-    };
-
-    const state = gameStateReducer(dirtyState, {
+  it('progresses directly from Case 2 into the scheduled-mail Case 4', () => {
+    const state = gameStateReducer({ ...initialGameState, currentDay: 2 }, {
       type: 'PROGRESS_DAY',
-      payload: { day: 3, notifications: null, newFlags: { case3Started: true } },
+      payload: {
+        day: 4,
+        notifications: {
+          id: 'case4-scheduled-mail',
+          title: 'Envío programado pendiente de revisión',
+          message: 'AelMail espera una revisión.',
+          appToOpen: 'mail',
+        },
+        newFlags: { case4Started: true },
+      },
     });
 
-    expect(state.currentDay).toBe(3);
-    expect(state.evidenceFound).toEqual(['ev-cc-leak']);
+    expect(state.currentDay).toBe(4);
+    expect(state.flags.case4Started).toBe(true);
+    expect(state.activeNotification?.appToOpen).toBe('mail');
     expect(state.selectedAuditElement).toBeNull();
     expect(state.selectedRuleId).toBeNull();
   });

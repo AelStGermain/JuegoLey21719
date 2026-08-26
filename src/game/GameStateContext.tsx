@@ -30,7 +30,9 @@ const restoreGameState = (initial: GameState): GameState => {
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return initial;
 
     const saved = parsed as Partial<GameState>;
-    const currentDay = saved.currentDay === 2 || saved.currentDay === 3 ? saved.currentDay : 1;
+    const savedDay = saved.currentDay ?? 1;
+    const isRemovedCase3Save = savedDay === 3;
+    const currentDay = savedDay === 4 ? 4 : savedDay === 2 || isRemovedCase3Save ? 2 : 1;
     const validStatuses: GameState['workdayStatus'][] = ['active', 'transitioning', 'finished'];
     const validSourceApps = ['mail', 'spreadsheet', 'aelforms'];
     const savedNotification = saved.activeNotification;
@@ -53,7 +55,9 @@ const restoreGameState = (initial: GameState): GameState => {
     return {
       ...initial,
       currentDay,
-      workdayStatus: saved.workdayStatus && validStatuses.includes(saved.workdayStatus)
+      workdayStatus: isRemovedCase3Save
+        ? 'transitioning'
+        : saved.workdayStatus && validStatuses.includes(saved.workdayStatus)
         ? saved.workdayStatus
         : initial.workdayStatus,
       evidenceFound: Array.isArray(saved.evidenceFound)

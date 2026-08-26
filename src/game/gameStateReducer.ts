@@ -73,7 +73,7 @@ export const gameStateReducer = (state: GameState, action: GameAction): GameStat
 
     case 'PROGRESS_DAY': {
       const isStartingCase2 = state.currentDay !== 2 && action.payload.day === 2;
-      const isStartingCase3 = state.currentDay !== 3 && action.payload.day === 3;
+      const isStartingCase4 = state.currentDay !== 4 && action.payload.day === 4;
       return {
         ...state,
         currentDay: action.payload.day,
@@ -85,8 +85,8 @@ export const gameStateReducer = (state: GameState, action: GameAction): GameStat
               && !id.startsWith('ev-ch-')
               && !id.startsWith('ev-form-')
             ))
-          : isStartingCase3
-            ? state.evidenceFound.filter(id => !id.startsWith('lead-form-') && !id.startsWith('ev-form-'))
+          : isStartingCase4
+            ? state.evidenceFound.filter(id => !id.startsWith('ev-case4-'))
             : state.evidenceFound,
         selectedAuditElement: null,
         selectedRuleId: null,

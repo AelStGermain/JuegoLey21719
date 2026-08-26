@@ -6,14 +6,14 @@ import MailApp from './applications/mail/MailApp';
 import SpreadsheetApp from './applications/spreadsheet/SpreadsheetApp';
 import AelScanApp from './applications/aelscan/AelScanApp';
 import AelChatApp from './applications/aelchat/AelChatApp';
-import AelFormsApp from './applications/aelforms/AelFormsApp';
 import SplashScreen from './components/SplashScreen';
 import ExperienceScreen, { SHOW_GAME_INTRO_EVENT } from './components/ExperienceScreen';
-import { Mail, FileSpreadsheet, ShieldAlert, Volume2, VolumeX, RefreshCw, MessageSquare, ClipboardList } from 'lucide-react';
+import { Mail, FileSpreadsheet, ShieldAlert, Volume2, VolumeX, RefreshCw, MessageSquare } from 'lucide-react';
 import { playSound } from './components/sound';
-import { isApplicationAvailableInCase } from './desktop/caseApplications';
+import { getCaseProgressPosition, isApplicationAvailableInCase } from './desktop/caseApplications';
+import { Case4Provider } from './game/Case4Context';
 
-type MobileAppId = 'mail' | 'spreadsheet' | 'aelscan' | 'aelchat' | 'aelforms';
+type MobileAppId = 'mail' | 'spreadsheet' | 'aelscan' | 'aelchat';
 
 const ResponsiveLayout: React.FC = () => {
   const { state: gameState, toggleSound, resetGame, progressDay } = useGameState();
@@ -48,7 +48,7 @@ const ResponsiveLayout: React.FC = () => {
   };
 
   useEffect(() => {
-    setActiveTab(gameState.currentDay === 3 ? 'aelforms' : gameState.currentDay === 2 ? 'aelchat' : 'mail');
+    setActiveTab(gameState.currentDay === 2 ? 'aelchat' : 'mail');
   }, [gameState.currentDay]);
 
   // If not mobile, render the full multi-window desktop
@@ -88,7 +88,7 @@ const ResponsiveLayout: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'var(--bg-slate-dark)' }}>AelOS Mobile</span>
           <span style={{ fontSize: '0.7rem', color: '#475569' }}>
-            Día {gameState.currentDay} / 3 · Caso activo
+            Caso {gameState.currentDay} · Etapa {getCaseProgressPosition(gameState.currentDay)} / 3
           </span>
         </div>
 
@@ -122,14 +122,9 @@ const ResponsiveLayout: React.FC = () => {
         {isApplicationAvailableInCase(gameState.currentDay, 'spreadsheet') && (
           <div hidden={activeTab !== 'spreadsheet'} style={{ width: '100%', height: '100%' }}><SpreadsheetApp /></div>
         )}
-        {gameState.currentDay !== 3 && (
-          <div hidden={activeTab !== 'aelscan'} style={{ width: '100%', height: '100%' }}><AelScanApp /></div>
-        )}
+        <div hidden={activeTab !== 'aelscan'} style={{ width: '100%', height: '100%' }}><AelScanApp /></div>
         {isApplicationAvailableInCase(gameState.currentDay, 'aelchat') && (
           <div hidden={activeTab !== 'aelchat'} style={{ width: '100%', height: '100%' }}><AelChatApp /></div>
-        )}
-        {isApplicationAvailableInCase(gameState.currentDay, 'aelforms') && (
-          <div hidden={activeTab !== 'aelforms'} style={{ width: '100%', height: '100%' }}><AelFormsApp /></div>
         )}
       </div>
 
@@ -188,7 +183,7 @@ const ResponsiveLayout: React.FC = () => {
           <span>Planilla</span>
         </button>}
 
-        {gameState.currentDay !== 3 && <button
+        <button
           onClick={() => handleTabChange('aelscan')}
           style={{
             flex: 1,
@@ -207,7 +202,7 @@ const ResponsiveLayout: React.FC = () => {
         >
           <ShieldAlert size={16} />
           <span>AelScan</span>
-        </button>}
+        </button>
 
         {isApplicationAvailableInCase(gameState.currentDay, 'aelchat') && <button
           onClick={() => handleTabChange('aelchat')}
@@ -228,26 +223,6 @@ const ResponsiveLayout: React.FC = () => {
         >
           <MessageSquare size={16} />
           <span>Chat</span>
-        </button>}
-        {isApplicationAvailableInCase(gameState.currentDay, 'aelforms') && <button
-          onClick={() => handleTabChange('aelforms')}
-          style={{
-            flex: 1,
-            height: '100%',
-            background: activeTab === 'aelforms' ? '#d8ee78' : 'transparent',
-            border: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '3px',
-            fontSize: '0.75rem',
-            fontWeight: activeTab === 'aelforms' ? 'bold' : 'normal',
-            color: 'var(--text-dark)',
-          }}
-        >
-          <ClipboardList size={16} />
-          <span>Forms</span>
         </button>}
       </div>
 
@@ -284,28 +259,33 @@ const ResponsiveLayout: React.FC = () => {
         ) : gameState.currentDay === 2 ? (
           <ExperienceScreen
             theme="case2"
-            eyebrow="MedVibe · Revisión previa"
-            title="RRHH te envió un borrador."
-            lead="Te piden revisar un formulario antes de enviarlo a toda la empresa. Puedes corregir el proceso antes de que los datos sean recopilados."
-            caseLabel="Caso 3 · Actualización de datos 2026"
-            caseTitle="Un formulario normal que pide demasiadas cosas."
-            description="Abre AelForms, selecciona las preguntas objetables y aplica la corrección explicada por el pilar correspondiente."
+            eyebrow="MedVibe · Último minuto"
+            title="Evita que este correo salga mal."
+            lead="RRHH está por enviar un aviso de pago a todo el personal. Hay tres cosas extrañas que debes encontrar antes de enviarlo."
+            caseLabel="Caso 4 · El correo equivocado"
+            caseTitle="Una revisión rápida antes de enviar."
+            description="Primero puedes mirar con calma. Cuando estés listo, inicia la revisión y comprueba quién lo recibirá, qué contiene y quién podrá verlo."
             steps={[
-              'Haz clic en una pregunta del formulario.',
-              'Lee el riesgo y aplica la corrección sugerida.',
-              'Prueba el resultado y envía el formulario a revisión.',
+              'Haz clic en los destinatarios y busca una dirección extraña.',
+              'Decide si 238 personas deben ver las direcciones de los demás.',
+              'Abre los dos adjuntos y conserva solo lo necesario.',
             ]}
-            tools={['AelForms']}
+            tools={['Mail', 'Excel', 'AelScan']}
             metrics={[
-              { value: '1', label: 'flujo vertical' },
-              { value: '2', label: 'pilares aplicables' },
-              { value: '3', label: 'revisar · corregir · probar' },
+              { value: '90 s', label: 'revisión normal' },
+              { value: '3', label: 'problemas ocultos' },
+              { value: '2', label: 'adjuntos' },
             ]}
-            continueLabel="Haz clic para comenzar el Caso 3"
+            continueLabel="Haz clic para abrir el correo pendiente"
             onContinue={() => {
-              progressDay(3, null, { case3Started: true });
-              setActiveTab('aelforms');
-              openWindow('aelforms');
+              progressDay(4, {
+                id: 'case4-scheduled-mail',
+                title: 'Envío programado pendiente de revisión',
+                message: 'RRHH programó una comunicación masiva. AelMail espera tu revisión antes de iniciar la cuenta regresiva.',
+                appToOpen: 'mail',
+              }, { case4Started: true });
+              setActiveTab('mail');
+              openWindow('mail');
               playSound.chime(gameState.soundEnabled);
             }}
           />
@@ -314,9 +294,9 @@ const ResponsiveLayout: React.FC = () => {
             theme="complete"
             eyebrow="Auditoría finalizada"
             title="Terminaste tu jornada."
-            lead="Revisaste información compartida, accesos desactualizados y un formulario que debía corregirse antes de publicar."
+            lead="Revisaste información compartida, accesos desactualizados y un correo programado que podía exponer datos personales."
             caseLabel="Simulación completada"
-            caseTitle="¡Completaste todas las simulaciones!."
+            caseTitle="¡Completaste todas las simulaciones!"
             description="La mejor respuesta reduce la exposición, deja registro y activa a quienes pueden corregir el problema."
             result={<div className="experience-result"><strong>✓ Medidas registradas</strong>Los hallazgos y las acciones correctivas quedaron documentados.</div>}
             steps={[
@@ -327,9 +307,18 @@ const ResponsiveLayout: React.FC = () => {
             tools={[]}
             metrics={[
               { value: '3/3', label: 'casos completados' },
-              { value: '12+', label: 'evidencias revisadas' },
+              { value: '14', label: 'evidencias revisadas' },
               { value: '100%', label: 'bitácora cerrada' },
             ]}
+            credit={{
+              name: 'Sofía Gómez',
+              label: 'AelStGermain',
+              href: 'https://github.com/AelStGermain',
+              portfolio: {
+                label: 'Ver portafolio',
+                href: 'https://aelstgermain.github.io/Aelita/',
+              },
+            }}
             continueLabel="Haz clic para volver a jugar"
             onContinue={() => {
               resetGame();
@@ -346,9 +335,11 @@ const ResponsiveLayout: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <GameStateProvider>
-      <WindowManagerProvider>
-        <ResponsiveLayout />
-      </WindowManagerProvider>
+      <Case4Provider>
+        <WindowManagerProvider>
+          <ResponsiveLayout />
+        </WindowManagerProvider>
+      </Case4Provider>
     </GameStateProvider>
   );
 };

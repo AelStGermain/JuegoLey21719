@@ -168,7 +168,6 @@ export const AelFormsApp: React.FC = () => {
             <div className="forms-request__label">SOLICITUD · RRHH</div>
             <strong>Revisión antes de publicar</strong>
             <p>{scenario3.request}</p>
-            <div className="forms-request__tomorrow">Envío previsto: mañana · toda la empresa</div>
             <div className="forms-progress">
               <div className="forms-progress__heading">
                 <strong>Revisión del formulario</strong>
@@ -190,7 +189,6 @@ export const AelFormsApp: React.FC = () => {
                 <span className="forms-editor__status">BORRADOR</span>
                 <span className="forms-editor__save">Edita las preguntas antes de publicar</span>
               </div>
-              <button className="forms-preview-button" onClick={openPreview}><Eye size={14} /> Probar formulario</button>
             </div>
 
             <section className="form-canvas">

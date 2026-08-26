@@ -12,18 +12,35 @@ import {
   isCase2EvidenceResolved,
 } from '../../content/evidenceRules';
 import { pinEvidenceInAelScan, showAelScanRegulations } from '../../components/aelScanNavigation';
+import { scenario4 } from '../../content/scenario_4';
+import { useCase4 } from '../../game/Case4Context';
 
 export const SpreadsheetApp: React.FC = () => {
   const { state: gameState, setSelectedAuditElement } = useGameState();
+  const { state: case4State, selectArtifact, pauseForDeepReview } = useCase4();
   const [selectedCell, setSelectedCell] = useState<{ rowIdx: number; colKey: string } | null>(null);
 
   const isDay2 = gameState.currentDay === 2;
+  const isDay4 = gameState.currentDay === 4;
+  const isDay1 = gameState.currentDay === 1;
   const isWorkbookResolved = isDay2 && isCase2EvidenceResolved('ev-ch-file-agosto', gameState.evidenceFound);
 
   // Retrieve correct sheet details based on day
-  const sheetName = isDay2 ? scenario2.spreadsheet.name : 'postulantes_2026_q3.xlsx';
-  const columns = isDay2 ? scenario2.spreadsheet.columns : scenario1.spreadsheets['sheet-hr-applicants'].columns;
-  const rows = isDay2 ? scenario2.spreadsheet.rows : scenario1.spreadsheets['sheet-hr-applicants'].rows;
+  const sheetName = isDay4
+    ? case4State.attachments.find(attachment => attachment.kind === 'payroll')?.name ?? 'nomina_agosto.xlsx'
+    : isDay2
+      ? scenario2.spreadsheet.name
+      : 'postulantes_2026_q3.xlsx';
+  const columns = isDay4
+    ? scenario4.spreadsheet.columns
+    : isDay2
+      ? scenario2.spreadsheet.columns
+      : scenario1.spreadsheets['sheet-hr-applicants'].columns;
+  const rows: Array<Record<string, any>> = isDay4
+    ? scenario4.spreadsheet.rows
+    : isDay2
+      ? scenario2.spreadsheet.rows
+      : scenario1.spreadsheets['sheet-hr-applicants'].rows;
 
   // Map of column keys to evidence IDs for Day 1
   const evidenceMapping: Record<string, string> = {
@@ -33,7 +50,7 @@ export const SpreadsheetApp: React.FC = () => {
   };
 
   const handleHeaderClick = (colKey: string) => {
-    if (isDay2) return; // Column audit elements only in Case 1!
+    if (!isDay1) return; // Column audit elements only in Case 1.
 
     const targetElementId = 'col-' + colKey;
     if (!CASE1_INFRACTION_RULES_BY_ELEMENT[targetElementId]) return;
@@ -55,7 +72,7 @@ export const SpreadsheetApp: React.FC = () => {
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLElement>, colKey: string, label: string) => {
-    if (isDay2) return;
+    if (!isDay1) return;
     const targetElementId = 'col-' + colKey;
     if (!CASE1_INFRACTION_RULES_BY_ELEMENT[targetElementId]) return;
     e.dataTransfer.setData('text/plain', targetElementId);
@@ -72,6 +89,12 @@ export const SpreadsheetApp: React.FC = () => {
   };
 
   const handleWorkbookClick = () => {
+    if (isDay4) {
+      selectArtifact('payroll');
+      pauseForDeepReview();
+      playSound.click(gameState.soundEnabled);
+      return;
+    }
     if (!isDay2) return;
     pinEvidenceInAelScan('ev-ch-file-agosto');
     showAelScanRegulations();
@@ -105,9 +128,9 @@ export const SpreadsheetApp: React.FC = () => {
             onDragStart={handleWorkbookDragStart}
             onDragEnd={endEvidenceDrag}
             data-rule-ids={isDay2 ? getRuleTokens(CASE2_INFRACTION_RULES_BY_EVIDENCE['ev-ch-file-agosto']) : undefined}
-            className={isDay2 ? 'draggable-evidence workbook-evidence' : undefined}
-            aria-label={isDay2 ? `Evidencia: libro ${sheetName}` : undefined}
-            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: isWorkbookResolved ? '#d1fae5' : 'white', padding: '2px 8px', border: `1px solid ${isWorkbookResolved ? '#34d399' : '#cbd5e1'}`, borderRadius: '4px', color: isWorkbookResolved ? '#047857' : '#1e3a8a', fontWeight: 'bold', cursor: isDay2 ? 'grab' : 'default' }}
+            className={isDay2 ? 'draggable-evidence workbook-evidence' : isDay4 ? 'case4-workbook' : undefined}
+            aria-label={isDay2 ? `Evidencia: libro ${sheetName}` : isDay4 ? `Inspeccionar libro ${sheetName} con AelScan` : undefined}
+            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: isWorkbookResolved ? '#d1fae5' : 'white', padding: '2px 8px', border: `1px solid ${isWorkbookResolved ? '#34d399' : '#cbd5e1'}`, borderRadius: '4px', color: isWorkbookResolved ? '#047857' : '#1e3a8a', fontWeight: 'bold', cursor: isDay2 ? 'grab' : isDay4 ? 'pointer' : 'default' }}
           >
             {sheetName}{isWorkbookResolved ? '  ✓ resuelta' : ''}
           </span>
@@ -142,26 +165,26 @@ export const SpreadsheetApp: React.FC = () => {
                 ></th>
                 {columns.map(col => {
                   const targetElementId = 'col-' + col.key;
-                  const evidenceId = !isDay2 ? evidenceMapping[col.key] : undefined;
-                  const ruleIds = !isDay2 ? CASE1_INFRACTION_RULES_BY_ELEMENT[targetElementId] : undefined;
+                  const evidenceId = isDay1 ? evidenceMapping[col.key] : undefined;
+                  const ruleIds = isDay1 ? CASE1_INFRACTION_RULES_BY_ELEMENT[targetElementId] : undefined;
                   const isConfirmedInfraction = !!ruleIds;
                   
                   const isDiscovered = evidenceId && gameState.evidenceFound.includes(evidenceId);
-                  const isAuditing = !isDay2 && gameState.selectedAuditElement?.elementId === targetElementId;
+                  const isAuditing = isDay1 && gameState.selectedAuditElement?.elementId === targetElementId;
 
                   return (
                     <th
                       key={col.key}
                       id={targetElementId}
                       onClick={() => handleHeaderClick(col.key)}
-                      draggable={!isDiscovered && !isDay2 && isConfirmedInfraction}
+                      draggable={!isDiscovered && isDay1 && isConfirmedInfraction}
                       onDragStart={(e) => handleDragStart(e, col.key, col.label)}
                       onDragEnd={endEvidenceDrag}
                       data-rule-ids={getRuleTokens(ruleIds)}
                       style={{
                         border: '1px solid #cbd5e1',
                         padding: '8px 10px',
-                        cursor: !isDiscovered && !isDay2 && isConfirmedInfraction ? 'grab' : 'default',
+                        cursor: !isDiscovered && isDay1 && isConfirmedInfraction ? 'grab' : 'default',
                         background: isAuditing 
                           ? 'rgba(59, 130, 246, 0.08)' 
                           : isDiscovered 
@@ -176,7 +199,7 @@ export const SpreadsheetApp: React.FC = () => {
                         transition: 'all 0.2s',
                         color: isAuditing ? '#3b82f6' : 'inherit'
                       }}
-                      className={!isDiscovered && !isDay2 && isConfirmedInfraction ? 'selectable-hotspot draggable-evidence' : ''}
+                      className={!isDiscovered && isDay1 && isConfirmedInfraction ? 'selectable-hotspot draggable-evidence' : ''}
                     >
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifySelf: 'stretch', width: '100%', justifyContent: 'space-between', gap: '4px' }}>

@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
-  ClipboardList,
   FileSpreadsheet,
   Mail,
   MessageSquare,
@@ -31,7 +30,7 @@ interface ExperienceScreenProps {
   caseTitle: string;
   description: string;
   steps: string[];
-  tools: Array<'Mail' | 'Excel' | 'Chat' | 'AelScan' | 'AelForms'>;
+  tools: Array<'Mail' | 'Excel' | 'Chat' | 'AelScan'>;
   metrics: ExperienceMetric[];
   continueLabel: string;
   onContinue: () => void;
@@ -41,6 +40,10 @@ interface ExperienceScreenProps {
     name: string;
     label: string;
     href: string;
+    portfolio?: {
+      label: string;
+      href: string;
+    };
   };
 }
 
@@ -49,7 +52,6 @@ const toolIcons = {
   Excel: FileSpreadsheet,
   Chat: MessageSquare,
   AelScan: ScanSearch,
-  AelForms: ClipboardList,
 };
 
 export const ExperienceScreen: React.FC<ExperienceScreenProps> = ({
@@ -199,6 +201,14 @@ export const ExperienceScreen: React.FC<ExperienceScreenProps> = ({
               <a href={credit.href} target="_blank" rel="noreferrer">
                 GitHub: {credit.label}
               </a>
+              {credit.portfolio && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <a href={credit.portfolio.href} target="_blank" rel="noreferrer">
+                    {credit.portfolio.label}
+                  </a>
+                </>
+              )}
             </div>
           )}
 
