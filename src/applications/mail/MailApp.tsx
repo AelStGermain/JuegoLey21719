@@ -72,7 +72,7 @@ export const MailApp: React.FC = () => {
     playSound.click(gameState.soundEnabled);
   };
 
-  if (gameState.currentDay === 4) return <ScheduledMailCase />;
+  if (gameState.currentDay === 3) return <ScheduledMailCase />;
 
   return (
     <div className="ael-app mail-app" style={{ display: 'flex', height: '100%', width: '100%', background: '#f8fafc' }}>

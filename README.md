@@ -10,7 +10,7 @@ La versión actual contiene tres escenarios y conserva sus identificadores origi
 
 - **Caso 1 — Selección de personal:** revisar un correo y una planilla con información excesiva antes de responder.
 - **Caso 2 — Comunicación y acceso:** investigar datos personales compartidos en un chat corporativo y detectar accesos que ya no corresponden.
-- **Caso 4 — El correo equivocado:** corregir destinatarios, visibilidad y adjuntos antes de que termine la cuenta regresiva de un envío programado.
+- **Caso 3 — El correo equivocado:** corregir destinatarios, visibilidad y adjuntos antes de que termine la cuenta regresiva de un envío programado.
 
 AelScan acompaña la investigación y permite documentar los hallazgos relacionándolos con los pilares aplicables de la Ley 21.719.
 

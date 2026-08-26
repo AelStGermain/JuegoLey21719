@@ -13,7 +13,7 @@ import {
   CASE2_INFRACTION_RULES_BY_EVIDENCE,
 } from '../../content/evidenceRules';
 import { AELSCAN_PIN_EVIDENCE_EVENT, AELSCAN_SHOW_REGULATIONS_EVENT } from '../../components/aelScanNavigation';
-import Case4AelScan from './Case4AelScan';
+import Case3AelScan from './Case3AelScan';
 
 interface Pillar {
   id: number;
@@ -1078,7 +1078,7 @@ const LegacyAelScanApp: React.FC = () => {
 
 export const AelScanApp: React.FC = () => {
   const { state: gameState } = useGameState();
-  return gameState.currentDay === 4 ? <Case4AelScan /> : <LegacyAelScanApp />;
+  return gameState.currentDay === 3 ? <Case3AelScan /> : <LegacyAelScanApp />;
 };
 
 export default AelScanApp;

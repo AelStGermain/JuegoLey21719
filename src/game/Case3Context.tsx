@@ -1,34 +1,34 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, type ReactNode } from 'react';
 import { playSound } from '../components/sound';
 import {
-  createCase4Attachments,
-  createCase4Recipients,
-  evaluateCase4Draft,
-  type Case4ArtifactId,
-  type Case4Attachment,
-  type Case4Evaluation,
-  type Case4Recipient,
-} from '../content/scenario_4';
+  createCase3Attachments,
+  createCase3Recipients,
+  evaluateCase3Draft,
+  type Case3ArtifactId,
+  type Case3Attachment,
+  type Case3Evaluation,
+  type Case3Recipient,
+} from '../content/scenario_3';
 import { useGameState } from './GameStateContext';
 
-type Case4TimerStatus = 'initial' | 'running' | 'paused' | 'sent';
-type Case4Screen = 'review' | 'preflight' | 'result';
+type Case3TimerStatus = 'initial' | 'running' | 'paused' | 'sent';
+type Case3Screen = 'review' | 'preflight' | 'result';
 
-interface Case4State {
+interface Case3State {
   secondsRemaining: number;
   challengeMode: boolean;
-  timerStatus: Case4TimerStatus;
+  timerStatus: Case3TimerStatus;
   pauseReason: string | null;
   activityNotice: string | null;
-  screen: Case4Screen;
-  recipients: Case4Recipient[];
-  attachments: Case4Attachment[];
-  selectedArtifact: Case4ArtifactId;
-  evaluation: Case4Evaluation | null;
+  screen: Case3Screen;
+  recipients: Case3Recipient[];
+  attachments: Case3Attachment[];
+  selectedArtifact: Case3ArtifactId;
+  evaluation: Case3Evaluation | null;
   sentAutomatically: boolean;
 }
 
-type Case4Action =
+type Case3Action =
   | { type: 'RESET' }
   | { type: 'START' }
   | { type: 'START_CHALLENGE' }
@@ -36,29 +36,29 @@ type Case4Action =
   | { type: 'RESUME' }
   | { type: 'TICK' }
   | { type: 'SET_NOTICE'; notice: string | null }
-  | { type: 'SELECT_ARTIFACT'; artifact: Case4ArtifactId }
+  | { type: 'SELECT_ARTIFACT'; artifact: Case3ArtifactId }
   | { type: 'REMOVE_RECIPIENT'; id: string }
   | { type: 'PROTECT_AUDIENCE' }
   | { type: 'REMOVE_ATTACHMENT'; id: string }
   | { type: 'OPEN_PREFLIGHT' }
   | { type: 'CLOSE_PREFLIGHT' }
-  | { type: 'SUBMIT'; evaluation: Case4Evaluation; automatic: boolean };
+  | { type: 'SUBMIT'; evaluation: Case3Evaluation; automatic: boolean };
 
-const createInitialState = (): Case4State => ({
+const createInitialState = (): Case3State => ({
   secondsRemaining: 90,
   challengeMode: false,
   timerStatus: 'initial',
   pauseReason: 'EN ESPERA DE REVISIÓN',
   activityNotice: null,
   screen: 'review',
-  recipients: createCase4Recipients(),
-  attachments: createCase4Attachments(),
+  recipients: createCase3Recipients(),
+  attachments: createCase3Attachments(),
   selectedArtifact: null,
   evaluation: null,
   sentAutomatically: false,
 });
 
-const case4Reducer = (state: Case4State, action: Case4Action): Case4State => {
+const case3Reducer = (state: Case3State, action: Case3Action): Case3State => {
   switch (action.type) {
     case 'RESET':
       return createInitialState();
@@ -119,8 +119,8 @@ const case4Reducer = (state: Case4State, action: Case4Action): Case4State => {
   }
 };
 
-interface Case4ContextValue {
-  state: Case4State;
+interface Case3ContextValue {
+  state: Case3State;
   challengeAvailable: boolean;
   startReview: () => void;
   startChallenge: () => void;
@@ -128,7 +128,7 @@ interface Case4ContextValue {
   resumeReview: () => void;
   togglePause: () => void;
   pauseForDeepReview: () => void;
-  selectArtifact: (artifact: Case4ArtifactId) => void;
+  selectArtifact: (artifact: Case3ArtifactId) => void;
   removeRecipient: (id: string) => void;
   protectAudience: () => void;
   removeAttachment: (id: string) => void;
@@ -136,15 +136,15 @@ interface Case4ContextValue {
   closePreflight: () => void;
   confirmSend: () => void;
   finishScenario: () => void;
-  resetCase4: () => void;
-  retryCase4: () => void;
+  resetCase3: () => void;
+  retryCase3: () => void;
 }
 
-const Case4Context = createContext<Case4ContextValue | undefined>(undefined);
+const Case3Context = createContext<Case3ContextValue | undefined>(undefined);
 
-export const Case4Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const Case3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { state: gameState, makeDecision, setStatus } = useGameState();
-  const [state, dispatch] = useReducer(case4Reducer, undefined, createInitialState);
+  const [state, dispatch] = useReducer(case3Reducer, undefined, createInitialState);
   const milestonesRef = useRef(new Set<number>());
   const noticeTimerRef = useRef<number | null>(null);
   const challengeAvailable = Boolean(gameState.decisionsMade['decision-scheduled-mail']);
@@ -163,7 +163,7 @@ export const Case4Provider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, []);
 
   useEffect(() => {
-    if (gameState.currentDay !== 4) {
+    if (gameState.currentDay !== 3) {
       milestonesRef.current.clear();
       dispatch({ type: 'RESET' });
     }
@@ -176,7 +176,7 @@ export const Case4Provider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [state.timerStatus]);
 
   const submitDraft = useCallback((automatic: boolean) => {
-    const evaluation = evaluateCase4Draft(state.recipients, state.attachments);
+    const evaluation = evaluateCase3Draft(state.recipients, state.attachments);
     dispatch({ type: 'SUBMIT', evaluation, automatic });
     playSound[evaluation.level === 'perfect' ? 'success' : 'warning'](gameState.soundEnabled);
   }, [gameState.soundEnabled, state.attachments, state.recipients]);
@@ -228,7 +228,7 @@ export const Case4Provider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (state.timerStatus === 'running') pauseReview('REVISIÓN PAUSADA');
   }, [pauseReview, state.timerStatus]);
 
-  const selectArtifact = useCallback((artifact: Case4ArtifactId) => {
+  const selectArtifact = useCallback((artifact: Case3ArtifactId) => {
     dispatch({ type: 'SELECT_ARTIFACT', artifact });
     playSound.click(gameState.soundEnabled);
   }, [gameState.soundEnabled]);
@@ -266,20 +266,20 @@ export const Case4Provider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const finishScenario = useCallback(() => {
     if (!state.evaluation) return;
-    makeDecision('decision-scheduled-mail', `case4-${state.evaluation.level}`, {
-      case4Outcome: state.evaluation.level,
-      case4SentAutomatically: state.sentAutomatically,
+    makeDecision('decision-scheduled-mail', `case3-${state.evaluation.level}`, {
+      case3Outcome: state.evaluation.level,
+      case3SentAutomatically: state.sentAutomatically,
     });
     setStatus('transitioning');
     playSound.chime(gameState.soundEnabled);
   }, [gameState.soundEnabled, makeDecision, setStatus, state.evaluation, state.sentAutomatically]);
 
-  const resetCase4 = useCallback(() => {
+  const resetCase3 = useCallback(() => {
     milestonesRef.current.clear();
     dispatch({ type: 'RESET' });
   }, []);
 
-  const value = useMemo<Case4ContextValue>(() => ({
+  const value = useMemo<Case3ContextValue>(() => ({
     state,
     challengeAvailable,
     startReview,
@@ -296,16 +296,16 @@ export const Case4Provider: React.FC<{ children: ReactNode }> = ({ children }) =
     closePreflight,
     confirmSend,
     finishScenario,
-    resetCase4,
-    retryCase4: resetCase4,
-  }), [state, challengeAvailable, startReview, startChallenge, pauseReview, resumeReview, togglePause, pauseForDeepReview, selectArtifact, removeRecipient, protectAudience, removeAttachment, openPreflight, closePreflight, confirmSend, finishScenario, resetCase4]);
+    resetCase3,
+    retryCase3: resetCase3,
+  }), [state, challengeAvailable, startReview, startChallenge, pauseReview, resumeReview, togglePause, pauseForDeepReview, selectArtifact, removeRecipient, protectAudience, removeAttachment, openPreflight, closePreflight, confirmSend, finishScenario, resetCase3]);
 
-  return <Case4Context.Provider value={value}>{children}</Case4Context.Provider>;
+  return <Case3Context.Provider value={value}>{children}</Case3Context.Provider>;
 };
 
 // oxlint-disable-next-line react/only-export-components
-export const useCase4 = () => {
-  const context = useContext(Case4Context);
-  if (!context) throw new Error('useCase4 must be used within Case4Provider');
+export const useCase3 = () => {
+  const context = useContext(Case3Context);
+  if (!context) throw new Error('useCase3 must be used within Case3Provider');
   return context;
 };

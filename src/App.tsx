@@ -11,7 +11,7 @@ import ExperienceScreen, { SHOW_GAME_INTRO_EVENT } from './components/Experience
 import { Mail, FileSpreadsheet, ShieldAlert, Volume2, VolumeX, RefreshCw, MessageSquare } from 'lucide-react';
 import { playSound } from './components/sound';
 import { getCaseProgressPosition, isApplicationAvailableInCase } from './desktop/caseApplications';
-import { Case4Provider } from './game/Case4Context';
+import { Case3Provider } from './game/Case3Context';
 
 type MobileAppId = 'mail' | 'spreadsheet' | 'aelscan' | 'aelchat';
 
@@ -262,7 +262,7 @@ const ResponsiveLayout: React.FC = () => {
             eyebrow="MedVibe · Último minuto"
             title="Evita que este correo salga mal."
             lead="RRHH está por enviar un aviso de pago a todo el personal. Hay tres cosas extrañas que debes encontrar antes de enviarlo."
-            caseLabel="Caso 4 · El correo equivocado"
+            caseLabel="Caso 3 · El correo equivocado"
             caseTitle="Una revisión rápida antes de enviar."
             description="Primero puedes mirar con calma. Cuando estés listo, inicia la revisión y comprueba quién lo recibirá, qué contiene y quién podrá verlo."
             steps={[
@@ -278,12 +278,12 @@ const ResponsiveLayout: React.FC = () => {
             ]}
             continueLabel="Haz clic para abrir el correo pendiente"
             onContinue={() => {
-              progressDay(4, {
-                id: 'case4-scheduled-mail',
+              progressDay(3, {
+                id: 'case3-scheduled-mail',
                 title: 'Envío programado pendiente de revisión',
                 message: 'RRHH programó una comunicación masiva. AelMail espera tu revisión antes de iniciar la cuenta regresiva.',
                 appToOpen: 'mail',
-              }, { case4Started: true });
+              }, { case3Started: true });
               setActiveTab('mail');
               openWindow('mail');
               playSound.chime(gameState.soundEnabled);
@@ -335,11 +335,11 @@ const ResponsiveLayout: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <GameStateProvider>
-      <Case4Provider>
+      <Case3Provider>
         <WindowManagerProvider>
           <ResponsiveLayout />
         </WindowManagerProvider>
-      </Case4Provider>
+      </Case3Provider>
     </GameStateProvider>
   );
 };

@@ -1,0 +1,34 @@
+.case3-scan { height: 100%; display: flex; flex-direction: column; overflow: hidden; color: #273044; background: #f7f1e6 !important; }
+.case3-scan__header { flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 10px; color: #fff; background: #155d76; border-bottom: 3px solid #202238; }
+.case3-scan__header > span { width: 31px; height: 31px; display: grid; place-items: center; color: #273044; background: #f7d653; border: 3px solid #202238; border-radius: 50% 45% 53% 47%; transform: rotate(-4deg); }
+.case3-scan__header > div { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+.case3-scan__header strong { font-size: .84rem; }
+.case3-scan__header small { color: #cfebed; font-size: .57rem; }
+.case3-scan__header > b { padding: 4px 8px; color: #273044; background: #dced9a; border: 2px solid #202238; border-radius: 9px 3px 8px 5px; box-shadow: 2px 2px 0 #202238; font-size: .66rem; }
+.case3-scan__progress { height: 6px; flex-shrink: 0; background: #c6c0b5; }
+.case3-scan__progress span { display: block; height: 100%; background: linear-gradient(90deg,#f0d758,#7bc887); transition: width .35s ease; }
+.case3-scan__compact,.case3-scan__context,.case3-scan__error { min-height: 0; flex: 1; overflow-y: auto; padding: 18px 15px; }
+.case3-scan__compact > small,.case3-scan__context > small,.case3-scan__error > span { color: #397581; font-size: .58rem; font-weight: 1000; letter-spacing: .75px; }
+.case3-scan__compact h2,.case3-scan__context h2,.case3-scan__error h2 { margin: 4px 0; color: #273044; font-size: 1.05rem; line-height: 1.18; }
+.case3-scan__compact > p,.case3-scan__context > p { margin: 0 0 16px; color: #667181; font-size: .68rem; line-height: 1.45; }
+.case3-scan__checklist { display: grid; gap: 10px; margin-top: 18px; }
+.case3-scan__checklist > div { display: grid; grid-template-columns: 29px 1fr; align-items: center; gap: 9px; padding: 11px 10px; background: #fffdf7; border: 3px solid #394054; border-radius: 13px 5px 11px 7px; box-shadow: 3px 4px 0 #394054; }
+.case3-scan__checklist > div > span { width: 27px; height: 27px; display: grid; place-items: center; color: #fff; background: #fff; border: 3px solid #4c5566; border-radius: 50%; }
+.case3-scan__checklist > div.is-done { background: #e5f1bd; transform: translateX(-2px) rotate(-.25deg); }
+.case3-scan__checklist > div.is-done > span { background: #56a669; border-color: #273044; }
+.case3-scan__checklist p { display: flex; flex-direction: column; margin: 0; color: #687180; font-size: .6rem; }
+.case3-scan__checklist strong { color: #273044; font-size: .72rem; }
+.case3-scan__ready { display: flex; align-items: center; gap: 8px; margin-top: 16px; padding: 10px; color: #315947; background: #dff0b0; border: 2px dashed #52633e; transform: rotate(-.4deg); }
+.case3-scan__ready span { display: flex; flex-direction: column; font-size: .59rem; }
+.case3-scan__ready strong { font-size: .7rem; }
+.case3-scan__context { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+.case3-scan__context-icon { width: 58px; height: 58px; display: grid; place-items: center; margin-bottom: 13px; color: #273044; background: #ffe074; border: 4px solid #202238; border-radius: 49% 51% 45% 55%; box-shadow: 4px 5px 0 #202238; transform: rotate(-3deg); }
+.case3-scan__context > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.case3-scan__context button,.case3-scan__error button { display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; color: #273044; background: #dff0a7; border: 3px solid #30364a; border-radius: 9px 4px 8px 5px; box-shadow: 2px 3px 0 #30364a; cursor: pointer; font-size: .62rem; font-weight: 1000; }
+.case3-scan__context button + button { background: #fff; }
+.case3-scan__context em { margin-top: 13px; color: #4d695c; font-size: .58rem; font-style: normal; font-weight: 900; }
+.case3-scan__error { padding-top: 22px; }
+.case3-scan__error > div { margin-top: 8px; padding: 8px 9px; background: #fff1d3; border: 2px solid #50414a; border-radius: 9px 4px 8px 5px; }
+.case3-scan__error > div b { font-size: .57rem; letter-spacing: .5px; }
+.case3-scan__error > div p { margin: 2px 0 0; font-size: .61rem; line-height: 1.35; }
+.case3-scan__error button { margin-top: 12px; }

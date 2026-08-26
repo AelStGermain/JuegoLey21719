@@ -12,32 +12,32 @@ import {
   isCase2EvidenceResolved,
 } from '../../content/evidenceRules';
 import { pinEvidenceInAelScan, showAelScanRegulations } from '../../components/aelScanNavigation';
-import { scenario4 } from '../../content/scenario_4';
-import { useCase4 } from '../../game/Case4Context';
+import { scenario3 } from '../../content/scenario_3';
+import { useCase3 } from '../../game/Case3Context';
 
 export const SpreadsheetApp: React.FC = () => {
   const { state: gameState, setSelectedAuditElement } = useGameState();
-  const { state: case4State, selectArtifact, pauseForDeepReview } = useCase4();
+  const { state: case3State, selectArtifact, pauseForDeepReview } = useCase3();
   const [selectedCell, setSelectedCell] = useState<{ rowIdx: number; colKey: string } | null>(null);
 
   const isDay2 = gameState.currentDay === 2;
-  const isDay4 = gameState.currentDay === 4;
+  const isDay3 = gameState.currentDay === 3;
   const isDay1 = gameState.currentDay === 1;
   const isWorkbookResolved = isDay2 && isCase2EvidenceResolved('ev-ch-file-agosto', gameState.evidenceFound);
 
   // Retrieve correct sheet details based on day
-  const sheetName = isDay4
-    ? case4State.attachments.find(attachment => attachment.kind === 'payroll')?.name ?? 'nomina_agosto.xlsx'
+  const sheetName = isDay3
+    ? case3State.attachments.find(attachment => attachment.kind === 'payroll')?.name ?? 'nomina_agosto.xlsx'
     : isDay2
       ? scenario2.spreadsheet.name
       : 'postulantes_2026_q3.xlsx';
-  const columns = isDay4
-    ? scenario4.spreadsheet.columns
+  const columns = isDay3
+    ? scenario3.spreadsheet.columns
     : isDay2
       ? scenario2.spreadsheet.columns
       : scenario1.spreadsheets['sheet-hr-applicants'].columns;
-  const rows: Array<Record<string, any>> = isDay4
-    ? scenario4.spreadsheet.rows
+  const rows: Array<Record<string, any>> = isDay3
+    ? scenario3.spreadsheet.rows
     : isDay2
       ? scenario2.spreadsheet.rows
       : scenario1.spreadsheets['sheet-hr-applicants'].rows;
@@ -89,7 +89,7 @@ export const SpreadsheetApp: React.FC = () => {
   };
 
   const handleWorkbookClick = () => {
-    if (isDay4) {
+    if (isDay3) {
       selectArtifact('payroll');
       pauseForDeepReview();
       playSound.click(gameState.soundEnabled);
@@ -128,9 +128,9 @@ export const SpreadsheetApp: React.FC = () => {
             onDragStart={handleWorkbookDragStart}
             onDragEnd={endEvidenceDrag}
             data-rule-ids={isDay2 ? getRuleTokens(CASE2_INFRACTION_RULES_BY_EVIDENCE['ev-ch-file-agosto']) : undefined}
-            className={isDay2 ? 'draggable-evidence workbook-evidence' : isDay4 ? 'case4-workbook' : undefined}
-            aria-label={isDay2 ? `Evidencia: libro ${sheetName}` : isDay4 ? `Inspeccionar libro ${sheetName} con AelScan` : undefined}
-            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: isWorkbookResolved ? '#d1fae5' : 'white', padding: '2px 8px', border: `1px solid ${isWorkbookResolved ? '#34d399' : '#cbd5e1'}`, borderRadius: '4px', color: isWorkbookResolved ? '#047857' : '#1e3a8a', fontWeight: 'bold', cursor: isDay2 ? 'grab' : isDay4 ? 'pointer' : 'default' }}
+            className={isDay2 ? 'draggable-evidence workbook-evidence' : isDay3 ? 'case3-workbook' : undefined}
+            aria-label={isDay2 ? `Evidencia: libro ${sheetName}` : isDay3 ? `Inspeccionar libro ${sheetName} con AelScan` : undefined}
+            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', background: isWorkbookResolved ? '#d1fae5' : 'white', padding: '2px 8px', border: `1px solid ${isWorkbookResolved ? '#34d399' : '#cbd5e1'}`, borderRadius: '4px', color: isWorkbookResolved ? '#047857' : '#1e3a8a', fontWeight: 'bold', cursor: isDay2 ? 'grab' : isDay3 ? 'pointer' : 'default' }}
           >
             {sheetName}{isWorkbookResolved ? '  ✓ resuelta' : ''}
           </span>

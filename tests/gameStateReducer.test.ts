@@ -83,23 +83,23 @@ describe('gameStateReducer', () => {
     expect(state.activeNotification).toBeNull();
   });
 
-  it('progresses directly from Case 2 into the scheduled-mail Case 4', () => {
+  it('progresses directly from Case 2 into the scheduled-mail Case 3', () => {
     const state = gameStateReducer({ ...initialGameState, currentDay: 2 }, {
       type: 'PROGRESS_DAY',
       payload: {
-        day: 4,
+        day: 3,
         notifications: {
-          id: 'case4-scheduled-mail',
+          id: 'case3-scheduled-mail',
           title: 'Envío programado pendiente de revisión',
           message: 'AelMail espera una revisión.',
           appToOpen: 'mail',
         },
-        newFlags: { case4Started: true },
+        newFlags: { case3Started: true },
       },
     });
 
-    expect(state.currentDay).toBe(4);
-    expect(state.flags.case4Started).toBe(true);
+    expect(state.currentDay).toBe(3);
+    expect(state.flags.case3Started).toBe(true);
     expect(state.activeNotification?.appToOpen).toBe('mail');
     expect(state.selectedAuditElement).toBeNull();
     expect(state.selectedRuleId).toBeNull();

@@ -1,137 +1,221 @@
-export type Case3Pillar = 'FINALIDAD' | 'NECESIDAD';
-export type Case3CorrectionAction = 'remove' | 'make_optional';
+import type { SpreadsheetColumn } from '../game/types';
 
-export interface Case3FieldObjection {
-  pillar: Case3Pillar;
-  title: string;
-  reason: string;
-  action: Case3CorrectionAction;
-  actionLabel: string;
-}
+export type Case3RecipientBucket = 'to' | 'cc' | 'bcc';
+export type Case3RecipientKind = 'internal' | 'unknown-domain';
+export type Case3ArtifactId = 'suspicious-recipient' | 'audience-privacy' | 'payroll' | null;
 
-export interface Case3FormField {
+export interface Case3Recipient {
   id: string;
-  label: string;
-  type: 'text' | 'date' | 'select' | 'textarea';
-  required: boolean;
-  section: 'administrative' | 'activities';
-  purpose: string;
-  placeholder?: string;
-  existingAdministrativeRecord?: boolean;
-  objection?: Case3FieldObjection;
+  name: string;
+  email: string;
+  bucket: Case3RecipientBucket;
+  kind: Case3RecipientKind;
+  count: number;
+  active: boolean;
+  note: string;
 }
 
-export const CASE3_REVIEW_FIELD_ID = 'religion';
-export const CASE3_RELIGION_FINDING_ID = 'lead-form-religion-resolved';
+export interface Case3Attachment {
+  id: string;
+  name: string;
+  type: 'spreadsheet' | 'pdf';
+  kind: 'payroll' | 'notice';
+  active: boolean;
+  summary: string;
+}
 
-export const scenario3 = {
-  title: 'Actualización de Datos y Bienestar 2026',
-  description: 'RRHH prepara un formulario para actualizar registros y organizar beneficios y actividades internas.',
-  request: 'Hemos preparado el nuevo formulario de actualización de datos. ¿Puedes revisar las preguntas objetables antes de que lo enviemos mañana a toda la empresa?',
-  purpose: 'Selecciona una pregunta. Si presenta un riesgo, elige la corrección que explica qué pilar está comprometido.',
-  fields: [
-    {
-      id: 'name',
-      label: 'Nombre completo',
-      type: 'text',
-      required: true,
-      section: 'administrative',
-      purpose: 'Identificar y actualizar el registro del trabajador',
-      placeholder: 'Nombre y apellidos',
-      existingAdministrativeRecord: true,
-    },
-    {
-      id: 'birthdate',
-      label: 'Fecha de nacimiento',
-      type: 'date',
-      required: true,
-      section: 'administrative',
-      purpose: 'Actualizar el registro administrativo existente',
-      existingAdministrativeRecord: true,
-    },
-    {
-      id: CASE3_REVIEW_FIELD_ID,
-      label: 'Religión',
-      type: 'select',
-      required: true,
-      section: 'activities',
-      purpose: 'Organizar actividades internas',
-      objection: {
-        pillar: 'NECESIDAD',
-        title: 'Dato sensible que no hace falta para esta tarea',
-        reason: 'Organizar actividades generales no requiere conocer las creencias religiosas del trabajador.',
-        action: 'remove',
-        actionLabel: 'Eliminar porque no es necesario para la finalidad',
-      },
-    },
-    {
-      id: 'medication',
-      label: 'Medicamentos de uso permanente',
-      type: 'textarea',
-      required: true,
-      section: 'activities',
-      purpose: 'Organizar actividades internas',
-      objection: {
-        pillar: 'NECESIDAD',
-        title: 'Se solicita más información de la necesaria',
-        reason: 'El detalle de medicamentos permanentes excede lo requerido para organizar actividades generales.',
-        action: 'remove',
-        actionLabel: 'Eliminar porque solicita información excesiva',
-      },
-    },
-    {
-      id: 'emergency',
-      label: 'Contacto de emergencia',
-      type: 'text',
-      required: true,
-      section: 'administrative',
-      purpose: 'Contactar a una persona ante una emergencia',
-      existingAdministrativeRecord: true,
-    },
-    {
-      id: 'diet',
-      label: 'Preferencia alimentaria',
-      type: 'select',
-      required: true,
-      section: 'activities',
-      purpose: 'Organizar alimentación en actividades internas',
-      objection: {
-        pillar: 'FINALIDAD',
-        title: 'La finalidad es válida, pero participar debe ser voluntario',
-        reason: 'La preferencia puede ayudar a organizar alimentación, siempre que el trabajador pueda omitirla si no participa.',
-        action: 'make_optional',
-        actionLabel: 'Hacer voluntaria porque depende de la participación',
-      },
-    },
-    {
-      id: 'address',
-      label: 'Dirección particular',
-      type: 'text',
-      required: true,
-      section: 'administrative',
-      purpose: 'Actualizar el registro administrativo existente',
-      placeholder: 'Dirección registrada',
-      existingAdministrativeRecord: true,
-    },
-    {
-      id: 'instagram',
-      label: 'Instagram',
-      type: 'text',
-      required: false,
-      section: 'activities',
-      purpose: 'Sin finalidad definida',
-      placeholder: '@usuario',
-      objection: {
-        pillar: 'FINALIDAD',
-        title: 'No se explica para qué se solicita',
-        reason: 'RRHH no definió una finalidad concreta que justifique recopilar una cuenta personal.',
-        action: 'remove',
-        actionLabel: 'Eliminar porque no tiene una finalidad definida',
-      },
-    },
-  ] satisfies Case3FormField[],
+export interface Case3EvaluationCheck {
+  id: 'recipient' | 'privacy' | 'attachment';
+  label: string;
+  passed: boolean;
+  detail: string;
+  pillar: 'PROTECCIÓN' | 'NECESIDAD';
+}
+
+export interface Case3Evaluation {
+  level: 'perfect' | 'partial' | 'critical';
+  title: string;
+  summary: string;
+  checks: Case3EvaluationCheck[];
+  correctedCount: number;
+  recipientCount: number;
+  visibleCcCount: number;
+  attachmentCount: number;
+}
+
+const shuffle = <T,>(items: T[]) => {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+  }
+  return result;
 };
 
-export const CASE3_OBJECTED_FIELD_IDS = scenario3.fields
-  .filter(field => field.objection)
-  .map(field => field.id);
+const typoDomains = ['medvlbe.test', 'medvibe-cl.test', 'medvibee.test'];
+const payrollNames = ['nomina_agosto.xlsx', 'nomina_pagos_agosto.xlsx', 'remuneraciones_agosto.xlsx'];
+
+export const scenario3 = {
+  id: 'scenario-scheduled-mail',
+  title: 'El correo equivocado',
+  alertTitle: 'Evita que este correo salga mal',
+  purpose: 'Informar que el pago se realizará el viernes 28 de agosto.',
+  sender: 'rrhh@medvibe.test',
+  subject: 'Cambio de fecha de pago',
+  body: `Estimadas y estimados:\n\nEl proceso de pago de este mes se realizará el viernes 28 de agosto.\n\nAdjuntamos el aviso con la fecha actualizada.\n\nSaludos,\nRecursos Humanos`,
+  safePdfBody: `AVISO DE PAGO · AGOSTO\n\nEl proceso de pago se realizará el viernes 28 de agosto.\n\nNo es necesario realizar ninguna gestión.`,
+  spreadsheet: {
+    columns: [
+      { key: 'nombre', label: 'Nombre', category: 'personal_data', categoryLabel: 'Identificación' },
+      { key: 'rut', label: 'RUT', category: 'personal_data', categoryLabel: 'Identificador nacional' },
+      { key: 'sueldo', label: 'Sueldo', category: 'personal_data', categoryLabel: 'Dato financiero' },
+      { key: 'banco', label: 'Banco', category: 'personal_data', categoryLabel: 'Dato financiero' },
+      { key: 'cuenta', label: 'Cuenta', category: 'personal_data', categoryLabel: 'Dato bancario' },
+    ] satisfies SpreadsheetColumn[],
+    rows: [
+      { nombre: 'Camila Valdés', rut: '18.452.932-K', sueldo: '$2.350.000', banco: 'Banco Estado', cuenta: '0198845721' },
+      { nombre: 'Tomás Ossa', rut: '19.012.384-2', sueldo: '$2.790.000', banco: 'Banco de Chile', cuenta: '7710402388' },
+      { nombre: 'Francisca Cruz', rut: '16.892.411-8', sueldo: '$2.180.000', banco: 'Santander', cuenta: '5488210934' },
+      { nombre: 'Renato Díaz', rut: '15.932.102-K', sueldo: '$2.610.000', banco: 'Bci', cuenta: '2288447102' },
+      { nombre: 'Gabriela Soto', rut: '17.221.493-5', sueldo: '$2.420.000', banco: 'Itaú', cuenta: '4409815270' },
+    ],
+  },
+};
+
+export const createCase3Recipients = (): Case3Recipient[] => {
+  const typoDomain = typoDomains[Math.floor(Math.random() * typoDomains.length)];
+  const copiedRecipients: Case3Recipient[] = [
+    {
+      id: 'accounting',
+      name: 'Contabilidad',
+      email: 'contabilidad@medvibe.test',
+      bucket: 'cc',
+      kind: 'internal',
+      count: 1,
+      active: true,
+      note: 'Dirección interna reconocida.',
+    },
+    {
+      id: 'payroll-team',
+      name: 'Remuneraciones',
+      email: 'remuneraciones@medvibe.test',
+      bucket: 'cc',
+      kind: 'internal',
+      count: 1,
+      active: true,
+      note: 'Dirección interna reconocida.',
+    },
+    {
+      id: 'mistyped-payroll',
+      name: 'Remuneraciones',
+      email: `remuneraciones@${typoDomain}`,
+      bucket: 'cc',
+      kind: 'unknown-domain',
+      count: 1,
+      active: true,
+      note: 'Dirección no reconocida.',
+    },
+  ];
+
+  return [
+    {
+      id: 'staff-list',
+      name: 'Personal MedVibe',
+      email: '238 personas',
+      bucket: 'to',
+      kind: 'internal',
+      count: 238,
+      active: true,
+      note: 'Las direcciones todavía son visibles entre destinatarios.',
+    },
+    ...shuffle(copiedRecipients),
+  ];
+};
+
+export const createCase3Attachments = (): Case3Attachment[] => shuffle([
+  {
+    id: 'payment-notice',
+    name: 'aviso_pago.pdf',
+    type: 'pdf',
+    kind: 'notice',
+    active: true,
+    summary: 'Fecha de pago e instrucciones generales.',
+  },
+  {
+    id: 'payroll-sheet',
+    name: payrollNames[Math.floor(Math.random() * payrollNames.length)],
+    type: 'spreadsheet',
+    kind: 'payroll',
+    active: true,
+    summary: 'Nombre, RUT, sueldo, banco y cuenta.',
+  },
+]);
+
+export const getCase3CorrectedCount = (
+  recipients: Case3Recipient[],
+  attachments: Case3Attachment[],
+) => {
+  const suspiciousRemoved = !recipients.some(recipient => recipient.active && recipient.kind === 'unknown-domain');
+  const staff = recipients.find(recipient => recipient.id === 'staff-list');
+  const audienceProtected = staff?.bucket === 'bcc';
+  const payrollRemoved = !attachments.some(attachment => attachment.active && attachment.kind === 'payroll');
+  return [suspiciousRemoved, audienceProtected, payrollRemoved].filter(Boolean).length;
+};
+
+export const evaluateCase3Draft = (
+  recipients: Case3Recipient[],
+  attachments: Case3Attachment[],
+): Case3Evaluation => {
+  const activeRecipients = recipients.filter(recipient => recipient.active);
+  const activeAttachments = attachments.filter(attachment => attachment.active);
+  const suspiciousPresent = activeRecipients.some(recipient => recipient.kind === 'unknown-domain');
+  const staff = recipients.find(recipient => recipient.id === 'staff-list');
+  const audienceProtected = staff?.bucket === 'bcc';
+  const payrollPresent = activeAttachments.some(attachment => attachment.kind === 'payroll');
+
+  const checks: Case3EvaluationCheck[] = [
+    {
+      id: 'recipient',
+      label: 'Destinatario equivocado',
+      passed: !suspiciousPresent,
+      detail: suspiciousPresent
+        ? 'Una dirección no reconocida recibió el correo.'
+        : 'Evitaste que una dirección incorrecta recibiera información.',
+      pillar: 'PROTECCIÓN',
+    },
+    {
+      id: 'privacy',
+      label: 'Direcciones visibles',
+      passed: Boolean(audienceProtected),
+      detail: audienceProtected
+        ? 'Las direcciones de 238 personas quedaron ocultas con CCO.'
+        : 'Los trabajadores pudieron ver las direcciones de los demás.',
+      pillar: 'PROTECCIÓN',
+    },
+    {
+      id: 'attachment',
+      label: 'Nómina innecesaria',
+      passed: !payrollPresent,
+      detail: payrollPresent
+        ? 'La nómina con sueldos y cuentas fue enviada a todos.'
+        : 'Retiraste información que no hacía falta para comunicar una fecha.',
+      pillar: 'NECESIDAD',
+    },
+  ];
+
+  const correctedCount = checks.filter(check => check.passed).length;
+  const level: Case3Evaluation['level'] = correctedCount === 3 ? 'perfect' : correctedCount === 0 ? 'critical' : 'partial';
+
+  return {
+    level,
+    title: level === 'perfect' ? 'ENVÍO COMPLETADO' : 'CORREO ENVIADO CON PROBLEMAS',
+    summary: level === 'perfect'
+      ? 'Correo enviado a 238 trabajadores. Evitaste 3 riesgos.'
+      : `El correo salió con ${3 - correctedCount} ${3 - correctedCount === 1 ? 'problema pendiente' : 'problemas pendientes'}.`,
+    checks,
+    correctedCount,
+    recipientCount: activeRecipients.reduce((total, recipient) => total + recipient.count, 0),
+    visibleCcCount: audienceProtected ? 0 : 238,
+    attachmentCount: activeAttachments.length,
+  };
+};

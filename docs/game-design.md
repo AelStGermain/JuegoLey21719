@@ -10,7 +10,7 @@ To maintain a clean and performant architecture, state is divided into two conte
 Tracks layout configurations only. Re-renders in this context do not trigger checks in the scenario engine.
 ```typescript
 export interface WindowState {
-  id: string; // 'mail', 'spreadsheet', 'aelchat', 'aelforms'
+  id: string; // 'mail', 'spreadsheet', 'aelchat'
   title: string;
   isOpen: boolean;
   isMinimized: boolean;

@@ -53,7 +53,7 @@ To make the gameplay educational and challenging, we split automated assistance 
 ## Responsive Layout Strategy
 
 * **Desktop/Tablet Screen**: Full window-manager interface. Floating windows are draggable, stackable, and resizable.
-* **Mobile Screen**: The UI automatically pivots to a single-app tab system. Instead of floating windows overlapping, the user runs the applications available for the current case full-screen. AelScan is available in Cases 1 and 2; Case 3 is completed entirely inside AelForms.
+* **Mobile Screen**: The UI automatically pivots to a single-app tab system. Instead of floating windows overlapping, the user runs the applications available for the current case full-screen. AelScan remains available throughout the experience; Case 3 combines Mail, Spreadsheet and AelScan in a timed review.
 
 ---
 

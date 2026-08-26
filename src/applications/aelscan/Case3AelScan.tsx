@@ -1,11 +1,11 @@
 import React from 'react';
 import { Check, EyeOff, FileSpreadsheet, Mail, RotateCcw, ShieldAlert, Trash2, UserRoundSearch } from 'lucide-react';
-import { getCase4CorrectedCount } from '../../content/scenario_4';
-import { useCase4 } from '../../game/Case4Context';
+import { getCase3CorrectedCount } from '../../content/scenario_3';
+import { useCase3 } from '../../game/Case3Context';
 import { useWindowManager } from '../../game/WindowManagerContext';
-import './Case4AelScan.css';
+import './Case3AelScan.css';
 
-export const Case4AelScan: React.FC = () => {
+export const Case3AelScan: React.FC = () => {
   const { openWindow } = useWindowManager();
   const {
     state,
@@ -13,9 +13,9 @@ export const Case4AelScan: React.FC = () => {
     removeAttachment,
     selectArtifact,
     resumeReview,
-    retryCase4,
-  } = useCase4();
-  const correctedCount = getCase4CorrectedCount(state.recipients, state.attachments);
+    retryCase3,
+  } = useCase3();
+  const correctedCount = getCase3CorrectedCount(state.recipients, state.attachments);
   const payroll = state.attachments.find(attachment => attachment.kind === 'payroll' && attachment.active);
   const evaluation = state.evaluation;
 
@@ -28,8 +28,8 @@ export const Case4AelScan: React.FC = () => {
   const renderContext = () => {
     if (state.selectedArtifact === 'suspicious-recipient') {
       return (
-        <section className="case4-scan__context">
-          <span className="case4-scan__context-icon"><UserRoundSearch size={22} /></span>
+        <section className="case3-scan__context">
+          <span className="case3-scan__context-icon"><UserRoundSearch size={22} /></span>
           <small>AELSCAN DICE</small>
           <h2>Esa dirección no me resulta familiar.</h2>
           <p>Mira con atención el dominio antes de decidir.</p>
@@ -40,8 +40,8 @@ export const Case4AelScan: React.FC = () => {
 
     if (state.selectedArtifact === 'audience-privacy') {
       return (
-        <section className="case4-scan__context">
-          <span className="case4-scan__context-icon"><EyeOff size={22} /></span>
+        <section className="case3-scan__context">
+          <span className="case3-scan__context-icon"><EyeOff size={22} /></span>
           <small>AELSCAN DICE</small>
           <h2>Hmm… 238 personas recibirán este correo.</h2>
           <p>¿Todos necesitan ver las direcciones de los demás?</p>
@@ -55,8 +55,8 @@ export const Case4AelScan: React.FC = () => {
 
     if (state.selectedArtifact === 'payroll') {
       return (
-        <section className="case4-scan__context">
-          <span className="case4-scan__context-icon"><FileSpreadsheet size={22} /></span>
+        <section className="case3-scan__context">
+          <span className="case3-scan__context-icon"><FileSpreadsheet size={22} /></span>
           <small>AELSCAN DICE</small>
           <h2>Ese archivo contiene bastante más información que el mensaje.</h2>
           <p>El correo solo informa una fecha. ¿Hace falta compartir sueldos y cuentas bancarias?</p>
@@ -76,35 +76,35 @@ export const Case4AelScan: React.FC = () => {
 
   if (state.screen === 'result' && evaluation && evaluation.level !== 'perfect') {
     return (
-      <div className="ael-app aelscan-app case4-scan">
-        <header className="case4-scan__header"><span><ShieldAlert size={17} /></span><div><strong>AelScan</strong><small>Revisión rápida</small></div></header>
-        <section className="case4-scan__error">
+      <div className="ael-app aelscan-app case3-scan">
+        <header className="case3-scan__header"><span><ShieldAlert size={17} /></span><div><strong>AelScan</strong><small>Revisión rápida</small></div></header>
+        <section className="case3-scan__error">
           <span>¿QUÉ OCURRIÓ?</span>
           <h2>El correo salió con algo pendiente.</h2>
           {evaluation.checks.filter(check => !check.passed).map(check => (
             <div key={check.id}><b>{check.pillar}</b><p>{check.detail}</p></div>
           ))}
-          <button type="button" onClick={() => { retryCase4(); openWindow('mail'); }}><RotateCcw size={13} /> Reintentar</button>
+          <button type="button" onClick={() => { retryCase3(); openWindow('mail'); }}><RotateCcw size={13} /> Reintentar</button>
         </section>
       </div>
     );
   }
 
   return (
-    <div className="ael-app aelscan-app case4-scan">
-      <header className="case4-scan__header">
+    <div className="ael-app aelscan-app case3-scan">
+      <header className="case3-scan__header">
         <span><ShieldAlert size={17} /></span>
         <div><strong>AelScan</strong><small>Asistente de revisión</small></div>
         <b>{correctedCount}/3</b>
       </header>
-      <div className="case4-scan__progress"><span style={{ width: `${correctedCount / 3 * 100}%` }} /></div>
+      <div className="case3-scan__progress"><span style={{ width: `${correctedCount / 3 * 100}%` }} /></div>
 
       {contextual ?? (
-        <section className="case4-scan__compact">
+        <section className="case3-scan__compact">
           <small>REVISIÓN RÁPIDA</small>
           <h2>{correctedCount === 3 ? 'Listo para enviar' : '3 cosas por revisar'}</h2>
           <p>{correctedCount === 3 ? 'Bien. El correo conserva solo lo necesario.' : 'Mira el correo y abre lo que te parezca extraño.'}</p>
-          <div className="case4-scan__checklist">
+          <div className="case3-scan__checklist">
             <div className={evaluation?.checks[0].passed || !state.recipients.some(recipient => recipient.active && recipient.kind === 'unknown-domain') ? 'is-done' : ''}>
               <span>{!state.recipients.some(recipient => recipient.active && recipient.kind === 'unknown-domain') ? <Check size={13} /> : null}</span>
               <p><strong>¿A quién?</strong>Revisa los destinatarios.</p>
@@ -118,11 +118,11 @@ export const Case4AelScan: React.FC = () => {
               <p><strong>¿Qué se adjunta?</strong>Abre los archivos.</p>
             </div>
           </div>
-          {correctedCount === 3 && <div className="case4-scan__ready"><Check size={18} /> <span><strong>3 riesgos corregidos</strong>Vuelve a AelMail para enviar.</span></div>}
+          {correctedCount === 3 && <div className="case3-scan__ready"><Check size={18} /> <span><strong>3 riesgos corregidos</strong>Vuelve a AelMail para enviar.</span></div>}
         </section>
       )}
     </div>
   );
 };
 
-export default Case4AelScan;
+export default Case3AelScan;

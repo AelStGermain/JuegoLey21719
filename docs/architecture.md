@@ -85,16 +85,16 @@ aelcase/
 │   ├── content/              # Scenario definitions, copy, legal details
 │   │   ├── scenario_1.ts     # HR incident scenario definition
 │   │   ├── scenario_2.ts     # Chat and access scenario definition
-│   │   └── scenario_3.ts     # Form-review scenario definition
+│   │   └── scenario_3.ts     # Scheduled-mail scenario definition
 │   ├── desktop/              # OS container, desktop grid, taskbar, clock
 │   ├── applications/         # Specific application modules
 │   │   ├── mail/             # Email client
 │   │   ├── spreadsheet/      # Spreadsheet inspector
 │   │   ├── aelscan/          # Scanner panel, explainable details
-│   │   ├── aelchat/          # Group chat and mitigation flow
-│   │   └── aelforms/         # Form editor and preview flow
+│   │   └── aelchat/          # Group chat and mitigation flow
 │   ├── game/                 # Game logic, state providers
 │   │   ├── GameStateContext.tsx     # Game state provider
+│   │   ├── Case3Context.tsx         # Scheduled-mail challenge state
 │   │   ├── gameStateReducer.ts      # Game action reducer
 │   │   ├── WindowManagerContext.tsx # UI window state provider
 │   │   └── types.ts                 # Type definitions

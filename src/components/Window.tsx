@@ -96,21 +96,18 @@ export const Window: React.FC<WindowProps> = ({ id, children }) => {
     mail: 'linear-gradient(105deg, #0ea5e9 0%, #6366f1 100%)',
     spreadsheet: 'linear-gradient(105deg, #10b981 0%, #22c55e 55%, #84cc16 100%)',
     aelchat: 'linear-gradient(105deg, #8b5cf6 0%, #ec4899 100%)',
-    aelforms: 'linear-gradient(105deg, #166534 0%, #65a30d 58%, #ca8a04 100%)',
   };
 
   const activeShadows: Record<string, string> = {
     mail: '0 8px 32px rgba(14, 165, 233, 0.35)',
     spreadsheet: '0 8px 32px rgba(16, 185, 129, 0.35)',
     aelchat: '0 8px 32px rgba(139, 92, 246, 0.35)',
-    aelforms: '0 8px 32px rgba(77, 124, 15, 0.34)',
   };
 
   const activeBorders: Record<string, string> = {
     mail: '2px solid #0284c7',
     spreadsheet: '2px solid #059669',
     aelchat: '2px solid #7c3aed',
-    aelforms: '2px solid #4d7c0f',
   };
 
   return (

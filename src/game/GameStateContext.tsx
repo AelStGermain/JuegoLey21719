@@ -20,6 +20,11 @@ interface GameStateContextProps {
 const GameStateContext = createContext<GameStateContextProps | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'aelos_game_state';
+const STORAGE_VERSION = 2;
+
+type PersistedGameState = Partial<GameState> & { storageVersion?: number };
+
+const migrateLegacyCaseId = (value: string) => value.replaceAll('case4', 'case3');
 
 const restoreGameState = (initial: GameState): GameState => {
   try {
@@ -29,12 +34,21 @@ const restoreGameState = (initial: GameState): GameState => {
     const parsed: unknown = JSON.parse(persisted);
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return initial;
 
-    const saved = parsed as Partial<GameState>;
+    const saved = parsed as PersistedGameState;
+    const isLegacySave = saved.storageVersion !== STORAGE_VERSION;
     const savedDay = saved.currentDay ?? 1;
-    const isRemovedCase3Save = savedDay === 3;
-    const currentDay = savedDay === 4 ? 4 : savedDay === 2 || isRemovedCase3Save ? 2 : 1;
+    const isRemovedFormCaseSave = isLegacySave && savedDay === 3;
+    const currentDay = isRemovedFormCaseSave
+      ? 2
+      : isLegacySave && savedDay === 4
+        ? 3
+        : savedDay === 3
+          ? 3
+          : savedDay === 2
+            ? 2
+            : 1;
     const validStatuses: GameState['workdayStatus'][] = ['active', 'transitioning', 'finished'];
-    const validSourceApps = ['mail', 'spreadsheet', 'aelforms'];
+    const validSourceApps = ['mail', 'spreadsheet'];
     const savedNotification = saved.activeNotification;
     const activeNotification = savedNotification === null || (
       savedNotification
@@ -43,9 +57,15 @@ const restoreGameState = (initial: GameState): GameState => {
       && typeof savedNotification.title === 'string'
       && typeof savedNotification.message === 'string'
       && (savedNotification.appToOpen === undefined || typeof savedNotification.appToOpen === 'string')
-    ) ? savedNotification : initial.activeNotification;
+    ) ? savedNotification === null
+      ? null
+      : {
+          ...savedNotification,
+          id: isLegacySave ? migrateLegacyCaseId(savedNotification.id) : savedNotification.id,
+        }
+      : initial.activeNotification;
     const savedAuditElement = saved.selectedAuditElement;
-    const selectedAuditElement = savedAuditElement
+    const selectedAuditElement = !isRemovedFormCaseSave && savedAuditElement
       && typeof savedAuditElement === 'object'
       && validSourceApps.includes(savedAuditElement.sourceApp)
       && typeof savedAuditElement.elementId === 'string'
@@ -55,19 +75,33 @@ const restoreGameState = (initial: GameState): GameState => {
     return {
       ...initial,
       currentDay,
-      workdayStatus: isRemovedCase3Save
+      workdayStatus: isRemovedFormCaseSave
         ? 'transitioning'
         : saved.workdayStatus && validStatuses.includes(saved.workdayStatus)
         ? saved.workdayStatus
         : initial.workdayStatus,
       evidenceFound: Array.isArray(saved.evidenceFound)
-        ? Array.from(new Set(saved.evidenceFound.filter((id): id is string => typeof id === 'string')))
+        ? Array.from(new Set(saved.evidenceFound
+            .filter((id): id is string => typeof id === 'string')
+            .filter(id => !id.startsWith('ev-form-') && !id.startsWith('lead-form-'))
+            .map(id => isLegacySave ? migrateLegacyCaseId(id) : id)))
         : initial.evidenceFound,
       decisionsMade: saved.decisionsMade && typeof saved.decisionsMade === 'object' && !Array.isArray(saved.decisionsMade)
-        ? Object.fromEntries(Object.entries(saved.decisionsMade).filter(([, choiceId]) => typeof choiceId === 'string'))
+        ? Object.fromEntries(Object.entries(saved.decisionsMade)
+            .filter(([, choiceId]) => typeof choiceId === 'string')
+            .map(([decisionId, choiceId]) => [
+              isLegacySave ? migrateLegacyCaseId(decisionId) : decisionId,
+              isLegacySave ? migrateLegacyCaseId(choiceId) : choiceId,
+            ]))
         : initial.decisionsMade,
       flags: saved.flags && typeof saved.flags === 'object' && !Array.isArray(saved.flags)
-        ? saved.flags
+        ? Object.fromEntries(Object.entries(saved.flags)
+            .filter(([key]) => !key.startsWith('case3Religion')
+              && !key.startsWith('case3Medication')
+              && !key.startsWith('case3Undefined')
+              && !key.startsWith('case3Voluntary')
+              && !key.startsWith('case3Preview'))
+            .map(([key, value]) => [isLegacySave ? migrateLegacyCaseId(key) : key, value]))
         : initial.flags,
       soundEnabled: typeof saved.soundEnabled === 'boolean' ? saved.soundEnabled : initial.soundEnabled,
       activeNotification,
@@ -87,7 +121,7 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
 
   useEffect(() => {
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ ...state, storageVersion: STORAGE_VERSION }));
     } catch (e) {
       console.error('Error saving game state to localStorage', e);
     }

@@ -25,7 +25,7 @@ import {
 } from '../content/evidenceRules';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCaseApplicationIds, getCaseProgressPosition, isApplicationAvailableInCase } from './caseApplications';
-import { useCase4 } from '../game/Case4Context';
+import { useCase3 } from '../game/Case3Context';
 
 // Animated Bezier Connection Overlay
 const ConnectionOverlay: React.FC<{
@@ -165,7 +165,7 @@ const ConnectionOverlay: React.FC<{
 
 export const Desktop: React.FC = () => {
   const { state: windowManagerState, openWindow, closeWindow, focusWindow, autoArrange } = useWindowManager();
-  const { state: case4State, resetCase4 } = useCase4();
+  const { state: case3State, resetCase3 } = useCase3();
   const {
     state: gameState,
     toggleSound,
@@ -213,7 +213,7 @@ export const Desktop: React.FC = () => {
       } else if (gameState.currentDay === 2) {
         closeWindow('mail');
         openWindow('aelchat');
-      } else if (gameState.currentDay === 4) {
+      } else if (gameState.currentDay === 3) {
         closeWindow('aelchat');
         closeWindow('spreadsheet');
         openWindow('mail');
@@ -254,21 +254,21 @@ export const Desktop: React.FC = () => {
     playSound.chime(gameState.soundEnabled);
   };
 
-  const handleNextCase4 = () => {
-    resetCase4();
-    progressDay(4, {
-      id: 'case4-scheduled-mail',
+  const handleNextCase3 = () => {
+    resetCase3();
+    progressDay(3, {
+      id: 'case3-scheduled-mail',
       title: 'Envío programado pendiente de revisión',
       message: 'RRHH programó una comunicación masiva. AelMail espera tu revisión antes de iniciar la cuenta regresiva.',
       appToOpen: 'mail',
-    }, { case4Started: true });
+    }, { case3Started: true });
     openWindow('mail');
     playSound.chime(gameState.soundEnabled);
   };
 
   // Cheerful, vibrant wallpaper styles changing per case/day
   const isDay2 = gameState.currentDay === 2;
-  const isDay4 = gameState.currentDay === 4;
+  const isDay3 = gameState.currentDay === 3;
   const documentedCase2FindingCount = CASE2_FINDING_IDS.filter(id => gameState.evidenceFound.includes(id)).length;
   const isMilestoneNotification = gameState.activeNotification?.id.startsWith('milestone-') ?? false;
   const case1AuditComplete = scenario1.evidences.every(evidence => gameState.evidenceFound.includes(evidence.id));
@@ -386,8 +386,8 @@ export const Desktop: React.FC = () => {
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: isDay4 ? '#287d83' : isDay2 ? '#8b5cf6' : '#3b82f6',
-    backgroundImage: isDay4
+    backgroundColor: isDay3 ? '#287d83' : isDay2 ? '#8b5cf6' : '#3b82f6',
+    backgroundImage: isDay3
       ? [
         'radial-gradient(circle at 15% 80%, rgba(250,204,21,0.48) 0%, transparent 35%)',
         'radial-gradient(circle at 84% 14%, rgba(251,146,60,0.42) 0%, transparent 34%)',
@@ -826,10 +826,10 @@ export const Desktop: React.FC = () => {
               Caso 2
             </button>
             <button
-              onClick={handleNextCase4}
+              onClick={handleNextCase3}
               style={{
-                background: gameState.currentDay === 4 ? '#f3cf55' : 'transparent',
-                color: gameState.currentDay === 4 ? '#273044' : '#64748b',
+                background: gameState.currentDay === 3 ? '#f3cf55' : 'transparent',
+                color: gameState.currentDay === 3 ? '#273044' : '#64748b',
                 border: 'none',
                 padding: '2px 8px',
                 borderRadius: '4px',
@@ -839,7 +839,7 @@ export const Desktop: React.FC = () => {
                 transition: 'all 0.15s'
               }}
             >
-              Caso 4
+              Caso 3
             </button>
           </div>
 
@@ -864,9 +864,9 @@ export const Desktop: React.FC = () => {
                 ? `${gameState.evidenceFound.filter(id => id.startsWith('ev-') && !id.startsWith('ev-ch-')).length}/4 evidencias`
                 : gameState.currentDay === 2
                   ? `${documentedCase2FindingCount}/${CASE2_FINDING_IDS.length} resueltas`
-                  : case4State.evaluation
-                      ? `resultado ${case4State.evaluation.level}`
-                      : `${case4State.secondsRemaining}s · ${case4State.timerStatus === 'running' ? 'envío activo' : 'envío pausado'}`
+                  : case3State.evaluation
+                      ? `resultado ${case3State.evaluation.level}`
+                      : `${case3State.secondsRemaining}s · ${case3State.timerStatus === 'running' ? 'envío activo' : 'envío pausado'}`
               }
             </span>
           </div>
@@ -1020,7 +1020,7 @@ export const Desktop: React.FC = () => {
             eyebrow="MedVibe · Último minuto"
             title="Evita que este correo salga mal."
             lead="RRHH está por enviar un aviso de pago a todo el personal. Hay tres cosas extrañas que debes encontrar antes de enviarlo."
-            caseLabel="Caso 4 · El correo equivocado"
+            caseLabel="Caso 3 · El correo equivocado"
             caseTitle="Una revisión rápida antes de enviar."
             description="Primero puedes mirar con calma. Cuando estés listo, inicia la revisión y comprueba quién lo recibirá, qué contiene y quién podrá verlo."
             steps={[
@@ -1035,7 +1035,7 @@ export const Desktop: React.FC = () => {
               { value: '2', label: 'adjuntos' },
             ]}
             continueLabel="Haz clic para abrir el correo pendiente"
-            onContinue={handleNextCase4}
+            onContinue={handleNextCase3}
           />
         ) : (
           <ExperienceScreen
