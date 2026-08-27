@@ -11,14 +11,12 @@ import {
 } from '../content/scenario_3';
 import { useGameState } from './GameStateContext';
 
-type Case3TimerStatus = 'initial' | 'running' | 'paused' | 'sent';
+type Case3TimerStatus = 'initial' | 'running' | 'sent';
 type Case3Screen = 'review' | 'preflight' | 'result';
 
 interface Case3State {
   secondsRemaining: number;
-  challengeMode: boolean;
   timerStatus: Case3TimerStatus;
-  pauseReason: string | null;
   activityNotice: string | null;
   screen: Case3Screen;
   recipients: Case3Recipient[];
@@ -31,9 +29,6 @@ interface Case3State {
 type Case3Action =
   | { type: 'RESET' }
   | { type: 'START' }
-  | { type: 'START_CHALLENGE' }
-  | { type: 'PAUSE'; reason: string }
-  | { type: 'RESUME' }
   | { type: 'TICK' }
   | { type: 'SET_NOTICE'; notice: string | null }
   | { type: 'SELECT_ARTIFACT'; artifact: Case3ArtifactId }
@@ -45,10 +40,8 @@ type Case3Action =
   | { type: 'SUBMIT'; evaluation: Case3Evaluation; automatic: boolean };
 
 const createInitialState = (): Case3State => ({
-  secondsRemaining: 90,
-  challengeMode: false,
+  secondsRemaining: 30,
   timerStatus: 'initial',
-  pauseReason: 'EN ESPERA DE REVISIÓN',
   activityNotice: null,
   screen: 'review',
   recipients: createCase3Recipients(),
@@ -64,16 +57,7 @@ const case3Reducer = (state: Case3State, action: Case3Action): Case3State => {
       return createInitialState();
     case 'START':
       if (state.timerStatus !== 'initial') return state;
-      return { ...state, timerStatus: 'running', pauseReason: null, activityNotice: 'Revisión iniciada' };
-    case 'START_CHALLENGE':
-      if (state.timerStatus !== 'initial') return state;
-      return { ...state, secondsRemaining: 45, challengeMode: true, timerStatus: 'running', pauseReason: null, activityNotice: 'Modo desafío · 45 segundos' };
-    case 'PAUSE':
-      if (state.timerStatus === 'sent') return state;
-      return { ...state, timerStatus: 'paused', pauseReason: action.reason, activityNotice: null };
-    case 'RESUME':
-      if (state.timerStatus === 'sent' || state.screen === 'result') return state;
-      return { ...state, timerStatus: 'running', pauseReason: null, activityNotice: 'Reanudando…' };
+      return { ...state, timerStatus: 'running', activityNotice: 'Revisión iniciada' };
     case 'TICK':
       if (state.timerStatus !== 'running' || state.secondsRemaining <= 0) return state;
       return { ...state, secondsRemaining: Math.max(0, state.secondsRemaining - 1) };
@@ -100,15 +84,14 @@ const case3Reducer = (state: Case3State, action: Case3Action): Case3State => {
         attachments: state.attachments.map(attachment => attachment.id === action.id ? { ...attachment, active: false } : attachment),
       };
     case 'OPEN_PREFLIGHT':
-      return { ...state, screen: 'preflight', timerStatus: 'paused', pauseReason: 'CONFIRMACIÓN DE ENVÍO', activityNotice: null };
+      return { ...state, screen: 'preflight', activityNotice: null };
     case 'CLOSE_PREFLIGHT':
-      return { ...state, screen: 'review', timerStatus: 'running', pauseReason: null, activityNotice: 'Reanudando…' };
+      return { ...state, screen: 'review', timerStatus: 'running', activityNotice: 'Reanudando…' };
     case 'SUBMIT':
       return {
         ...state,
         screen: 'result',
         timerStatus: 'sent',
-        pauseReason: null,
         activityNotice: null,
         selectedArtifact: null,
         evaluation: action.evaluation,
@@ -121,13 +104,7 @@ const case3Reducer = (state: Case3State, action: Case3Action): Case3State => {
 
 interface Case3ContextValue {
   state: Case3State;
-  challengeAvailable: boolean;
   startReview: () => void;
-  startChallenge: () => void;
-  pauseReview: (reason?: string) => void;
-  resumeReview: () => void;
-  togglePause: () => void;
-  pauseForDeepReview: () => void;
   selectArtifact: (artifact: Case3ArtifactId) => void;
   removeRecipient: (id: string) => void;
   protectAudience: () => void;
@@ -147,7 +124,6 @@ export const Case3Provider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [state, dispatch] = useReducer(case3Reducer, undefined, createInitialState);
   const milestonesRef = useRef(new Set<number>());
   const noticeTimerRef = useRef<number | null>(null);
-  const challengeAvailable = Boolean(gameState.decisionsMade['decision-scheduled-mail']);
 
   const setTemporaryNotice = useCallback((notice: string, duration = 1900) => {
     dispatch({ type: 'SET_NOTICE', notice });
@@ -203,30 +179,15 @@ export const Case3Provider: React.FC<{ children: ReactNode }> = ({ children }) =
     playSound.chime(gameState.soundEnabled);
   }, [gameState.soundEnabled]);
 
-  const startChallenge = useCallback(() => {
-    dispatch({ type: 'START_CHALLENGE' });
-    playSound.chime(gameState.soundEnabled);
-  }, [gameState.soundEnabled]);
-
-  const pauseReview = useCallback((reason = 'REVISIÓN PAUSADA') => {
-    dispatch({ type: 'PAUSE', reason });
-    playSound.click(gameState.soundEnabled);
-  }, [gameState.soundEnabled]);
-
-  const resumeReview = useCallback(() => {
-    dispatch({ type: 'RESUME' });
-    setTemporaryNotice('Reanudando…', 1200);
-    playSound.click(gameState.soundEnabled);
-  }, [gameState.soundEnabled, setTemporaryNotice]);
-
-  const togglePause = useCallback(() => {
-    if (state.timerStatus === 'running') pauseReview();
-    else if (state.timerStatus === 'paused') resumeReview();
-  }, [pauseReview, resumeReview, state.timerStatus]);
-
-  const pauseForDeepReview = useCallback(() => {
-    if (state.timerStatus === 'running') pauseReview('REVISIÓN PAUSADA');
-  }, [pauseReview, state.timerStatus]);
+  useEffect(() => {
+    const tutorialFinished = Boolean(gameState.flags.tutorialCase3Seen);
+    if (gameState.currentDay === 3
+      && gameState.workdayStatus === 'active'
+      && tutorialFinished
+      && state.timerStatus === 'initial') {
+      startReview();
+    }
+  }, [gameState.currentDay, gameState.flags.tutorialCase3Seen, gameState.workdayStatus, startReview, state.timerStatus]);
 
   const selectArtifact = useCallback((artifact: Case3ArtifactId) => {
     dispatch({ type: 'SELECT_ARTIFACT', artifact });
@@ -279,15 +240,16 @@ export const Case3Provider: React.FC<{ children: ReactNode }> = ({ children }) =
     dispatch({ type: 'RESET' });
   }, []);
 
+  const retryCase3 = useCallback(() => {
+    milestonesRef.current.clear();
+    dispatch({ type: 'RESET' });
+    dispatch({ type: 'START' });
+    playSound.chime(gameState.soundEnabled);
+  }, [gameState.soundEnabled]);
+
   const value = useMemo<Case3ContextValue>(() => ({
     state,
-    challengeAvailable,
     startReview,
-    startChallenge,
-    pauseReview,
-    resumeReview,
-    togglePause,
-    pauseForDeepReview,
     selectArtifact,
     removeRecipient,
     protectAudience,
@@ -297,8 +259,8 @@ export const Case3Provider: React.FC<{ children: ReactNode }> = ({ children }) =
     confirmSend,
     finishScenario,
     resetCase3,
-    retryCase3: resetCase3,
-  }), [state, challengeAvailable, startReview, startChallenge, pauseReview, resumeReview, togglePause, pauseForDeepReview, selectArtifact, removeRecipient, protectAudience, removeAttachment, openPreflight, closePreflight, confirmSend, finishScenario, resetCase3]);
+    retryCase3,
+  }), [state, startReview, selectArtifact, removeRecipient, protectAudience, removeAttachment, openPreflight, closePreflight, confirmSend, finishScenario, resetCase3, retryCase3]);
 
   return <Case3Context.Provider value={value}>{children}</Case3Context.Provider>;
 };

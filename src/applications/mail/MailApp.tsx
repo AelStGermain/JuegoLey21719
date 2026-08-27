@@ -6,7 +6,6 @@ import { Mail, FileSpreadsheet } from 'lucide-react';
 import { playSound } from '../../components/sound';
 import { beginEvidenceDrag, endEvidenceDrag } from '../../components/evidenceDrag';
 import { CASE1_INFRACTION_RULES_BY_ELEMENT, getRuleTokens } from '../../content/evidenceRules';
-import { showAelScanRegulations } from '../../components/aelScanNavigation';
 import ScheduledMailCase from './ScheduledMailCase';
 
 export const MailApp: React.FC = () => {
@@ -20,6 +19,7 @@ export const MailApp: React.FC = () => {
   const currentEmail = scenario1.emails.find(e => e.id === selectedMailId) || scenario1.emails[0];
   const isCcDiscovered = gameState.evidenceFound.includes('ev-cc-leak');
   const isCase1AuditComplete = gameState.currentDay === 1
+    && Boolean(gameState.flags.case1AuditAcknowledged)
     && scenario1.evidences.every(evidence => gameState.evidenceFound.includes(evidence.id));
   const storedReplyId = gameState.decisionsMade[scenario1.decision.id];
   const selectedReplyId = scenario1.decision.choices.some(choice => choice.id === storedReplyId)
@@ -50,8 +50,7 @@ export const MailApp: React.FC = () => {
 
   const handleMailElementClick = (elementId: string) => {
     if (gameState.currentDay !== 1) return; // Only selectable in Day 1 Case 1
-    showAelScanRegulations();
-    
+
     // Don't click if already found
     if (elementId === 'email-cc-header' && isCcDiscovered) return;
 
@@ -203,6 +202,7 @@ export const MailApp: React.FC = () => {
                 Archivos Adjuntos:
               </span>
               <div
+                data-tutorial-target="case1-attachment"
                 onClick={(event) => { event.stopPropagation(); openWindow('spreadsheet'); playSound.click(gameState.soundEnabled); }}
                 style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', maxWidth: '320px', transition: 'border 0.2s' }}
                 className="hover-card mail-attachment-card"

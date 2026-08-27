@@ -1,6 +1,6 @@
-# Legal Scope (Chilean Law 21.719) - AelCase
+# Legal Scope (Chilean Law 21.719) - AelOS
 
-This document details the legal principles from Chile's Personal Data Protection Law (Ley 21.719) integrated into AelCase, alongside the educational strategy and outcome terminology.
+This document details the legal principles from Chile's Personal Data Protection Law (Ley 21.719) integrated into AelOS, alongside the educational strategy and outcome terminology.
 
 ## Key Law 21.719 Concepts in Scenario 1
 
@@ -26,7 +26,7 @@ Chile's Ley 21.719 updates the legal framework for personal data processing, int
 
 ## Outcome Terminology (No Legal Verdicts)
 
-AelCase avoids definitive binary verdicts like "Compliant" (Cumple) or "Non-Compliant" (Incumple). Legal status is complex and contextual. Instead, the simulation displays **observable, objective metrics of privacy posture**:
+AelOS avoids definitive binary verdicts like "Compliant" (Cumple) or "Non-Compliant" (Incumple). Legal status is complex and contextual. Instead, the simulation displays **observable, objective metrics of privacy posture**:
 
 * **Exposición de Datos**: High / Medium / Low (indicating if sensitive data columns were transmitted).
 * **Nivel de Proporcionalidad**: Calculated based on the ratio of necessary data fields shared vs. unnecessary fields sent.
@@ -58,6 +58,6 @@ AelCase avoids definitive binary verdicts like "Compliant" (Cumple) or "Non-Comp
 
 ## Legal Disclaimer
 
-AelCase is an educational game designed for portfolio demonstration and privacy training. It features a clear footer disclaimer in all screens:
+AelOS is an educational game designed for portfolio demonstration and privacy training. It features a clear footer disclaimer in all screens:
 
 > **Educativo y de Simulación**: *Este simulador se presenta exclusivamente con fines formativos y de portafolio. Las situaciones representadas son ficticias y no constituyen asesoría legal o jurídica formal bajo la Ley 21.719 u otras normativas.*

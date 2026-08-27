@@ -1,6 +1,6 @@
-# Technical Architecture - AelCase
+# Technical Architecture - AelOS
 
-This document details the software architecture for AelCase, an interactive privacy decision simulator based on Chile's Personal Data Protection Law (Ley 21.719).
+This document details the software architecture for AelOS, an interactive privacy decision simulator based on Chile's Personal Data Protection Law (Ley 21.719).
 
 ## Tech Stack & Core Decisions
 1. **Frontend Core**: React 19, TypeScript, Vite.
@@ -13,7 +13,7 @@ This document details the software architecture for AelCase, an interactive priv
 
 ## Architectural Layers
 
-AelCase separates concerns into four major layers:
+AelOS separates concerns into four major layers:
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -73,7 +73,7 @@ Stateless data defining the scenarios, text files, emails, and legal rule explan
 ## Folder Structure
 
 ```text
-aelcase/
+aelos/
 ├── docs/                     # Design and technical documentation
 │   ├── architecture.md
 │   ├── ux-design.md

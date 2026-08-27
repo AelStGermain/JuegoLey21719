@@ -1,4 +1,4 @@
-# Game Design & Scenario Engine - AelCase
+# Game Design & Scenario Engine - AelOS
 
 This document details the game state, the structure of the Scenario Engine, evidence mechanics, and the narrative consequence engine.
 

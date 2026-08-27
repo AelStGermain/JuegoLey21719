@@ -8,26 +8,22 @@ interface SplashScreenProps {
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onEnter }) => (
   <ExperienceScreen
     theme="intro"
-    eyebrow="Bienvenido · Introducción"
-    title="Aprende a actuar frente a los datos personales."
-    lead="Este simulador te pone en situaciones laborales cotidianas para practicar cómo reconocer un riesgo, relacionarlo con la Ley 21.719 y tomar una decisión responsable."
-    caseLabel="¿Cómo se juega?"
-    caseTitle="Observa, relaciona y actúa."
-    description="Investiga el entorno, usa las pistas del reglamento y decide qué harías en cada situación."
-    steps={[
-      'Explora correos, planillas y conversaciones de trabajo.',
-      'Detecta incumplimientos y relaciónalos con los pilares aplicables de la ley.',
-      'Elige acciones que reduzcan el riesgo sin detener el trabajo.',
-    ]}
+    title="Bienvenido al simulador de cumplimiento"
+    lead="Entra a mi simulador AelOS. Tu misión es convertirte en un agente cumplidor de la ley de protección de datos... ¡comencemos!"
+    caseLabel="Caso 1"
+    caseTitle="RRHH te solicita algo"
+    description="Tienes un correo y una planilla pendientes de revisión. Al entrar verás una guía breve."
+    steps={[]}
     tools={[]}
     metrics={[]}
     requireExplicitAction
+    compact
     credit={{
       name: 'Sofía Gómez',
       label: 'AelStGermain',
       href: 'https://github.com/AelStGermain',
     }}
-    continueLabel="Haz clic para comenzar"
+    continueLabel="Comenzar Caso 1"
     onContinue={onEnter}
   />
 );

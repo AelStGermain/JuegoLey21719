@@ -2,7 +2,7 @@ import React, { useCallback, useState, useEffect, useLayoutEffect, useRef } from
 import { createPortal } from 'react-dom';
 import { useGameState } from '../../game/GameStateContext';
 import { scenario1 } from '../../content/scenario_1';
-import { ShieldAlert, BookOpen, HelpCircle, HelpCircle as GuideIcon } from 'lucide-react';
+import { ShieldAlert, HelpCircle } from 'lucide-react';
 import { playSound } from '../../components/sound';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -12,7 +12,7 @@ import {
   CASE2_INFRACTION_EVIDENCE_IDS,
   CASE2_INFRACTION_RULES_BY_EVIDENCE,
 } from '../../content/evidenceRules';
-import { AELSCAN_PIN_EVIDENCE_EVENT, AELSCAN_SHOW_REGULATIONS_EVENT } from '../../components/aelScanNavigation';
+import { AELSCAN_PIN_EVIDENCE_EVENT } from '../../components/aelScanNavigation';
 import Case3AelScan from './Case3AelScan';
 
 interface Pillar {
@@ -414,27 +414,16 @@ const COMPLIANCE_RELATIONS_CASE2: Relation2[] = [
   }
 ];
 
-const getEvidenceElementName = (id: string): string => {
-  if (id === 'email-subject-header') return 'Asunto del Correo';
-  if (id === 'email-de-header') return 'Remitente (De)';
-  if (id === 'email-para-header') return 'Destinatario (Para)';
-  if (id === 'email-cc-header') return 'Copia Carbono (CC)';
-  if (id.startsWith('col-')) return 'Columna: ' + id.replace('col-', '').toUpperCase();
-  return id;
-};
-
-type GadgetTab = 'reglamento' | 'guia';
-
 const LegacyAelScanApp: React.FC = () => {
   const {
     state: gameState,
     foundEvidence,
+    acknowledgeCase1Audit,
     setSelectedAuditElement,
     setSelectedRuleId,
     triggerNotification,
   } = useGameState();
 
-  const [activeTab, setActiveTab] = useState<GadgetTab>('reglamento');
   const [hoveredRuleId, setHoveredRuleId] = useState<number | null>(null);
   const [hoveredRect, setHoveredRect] = useState<AnchorRect | null>(null);
 
@@ -451,12 +440,6 @@ const LegacyAelScanApp: React.FC = () => {
   const ARTICLES = isDay2 ? PILLARS_CASE2 : PILLARS_CASE1;
 
   useEffect(() => {
-    const showRegulations = () => setActiveTab('reglamento');
-    window.addEventListener(AELSCAN_SHOW_REGULATIONS_EVENT, showRegulations);
-    return () => window.removeEventListener(AELSCAN_SHOW_REGULATIONS_EVENT, showRegulations);
-  }, []);
-
-  useEffect(() => {
     const pinEvidence = (event: Event) => {
       const evidenceId = (event as CustomEvent<string>).detail;
       if (isDay2 && CASE2_INFRACTION_EVIDENCE_IDS.includes(evidenceId)) {
@@ -464,7 +447,6 @@ const LegacyAelScanApp: React.FC = () => {
       } else {
         return;
       }
-      setActiveTab('reglamento');
       setComparisonState('idle');
       setComparisonResult(null);
     };
@@ -478,7 +460,6 @@ const LegacyAelScanApp: React.FC = () => {
       comparisonTimerRef.current = null;
     }
     lastComparisonKeyRef.current = null;
-    setActiveTab('reglamento');
     setHoveredRuleId(null);
     setHoveredRect(null);
     setComparisonState('idle');
@@ -575,7 +556,6 @@ const LegacyAelScanApp: React.FC = () => {
                 message: 'Confirmado en Reglamento: ' + match.explanation.slice(0, 50) + '...'
               });
             }
-            setActiveTab('reglamento');
           } else {
             playSound.success(gameState.soundEnabled);
           }
@@ -608,32 +588,21 @@ const LegacyAelScanApp: React.FC = () => {
               foundEvidence(match.evidenceId);
               playSound.success(gameState.soundEnabled);
 
-              const nextEvidenceCount = new Set([
-                ...gameState.evidenceFound.filter(id => scenario1.evidences.some(evidence => evidence.id === id)),
-                match.evidenceId,
-              ]).size;
-              const isFinalEvidence = nextEvidenceCount === scenario1.evidences.length;
               const ev = scenario1.evidences.find(e => e.id === match.evidenceId);
 
-              triggerNotification(isFinalEvidence ? {
-                id: 'milestone-case1-reply',
-                title: '🎉 Auditoría completa · Responde el correo',
-                message: 'Ya documentaste los 4 incumplimientos. Vuelve a Mail y elige una de las dos respuestas para Sofía.',
-                appToOpen: 'mail',
-              } : {
+              triggerNotification({
                 id: 'ev-found-' + Date.now(),
                 title: '🔍 Infracción Documentada',
                 message: 'Registrado: ' + (ev ? ev.description : 'Infracción de Privacidad') + '.'
               });
             }
-            setActiveTab('reglamento');
           } else {
             playSound.success(gameState.soundEnabled);
           }
         } else {
           setComparisonResult({
             result: 'unrelated',
-            explanation: 'La evidencia seleccionada no infringe este pilar. Todo en orden.'
+            explanation: 'La evidencia seleccionada no infringe este pilar, o está más relacionada con otro tipo de cumplimiento.'
           });
           playSound.warning(gameState.soundEnabled);
         }
@@ -657,12 +626,28 @@ const LegacyAelScanApp: React.FC = () => {
   }, [handleConfront, isDay2, selectedEvidenceId, selectedRuleId]);
 
   const handleClearSelection = () => {
+    const shouldAdvanceToReply = !isDay2
+      && comparisonResult?.result === 'violation'
+      && scenario1.evidences.every(evidence => gameState.evidenceFound.includes(evidence.id))
+      && !gameState.flags.case1AuditAcknowledged;
+
     lastComparisonKeyRef.current = null;
     setSelectedAuditElement(null);
     setSelectedRuleId(null);
     setSelectedEvIds([]);
     setComparisonState('idle');
     setComparisonResult(null);
+
+    if (shouldAdvanceToReply) {
+      acknowledgeCase1Audit();
+      triggerNotification({
+        id: 'milestone-case1-reply',
+        title: '🎉 Auditoría completa · Responde el correo',
+        message: 'Confirmaste los 4 incumplimientos. Vuelve a Mail y elige una de las dos respuestas para Sofía.',
+        appToOpen: 'mail',
+      });
+    }
+
     playSound.click(gameState.soundEnabled);
   };
 
@@ -730,25 +715,6 @@ const LegacyAelScanApp: React.FC = () => {
     }
   };
 
-  const tabStyle = (tab: GadgetTab): React.CSSProperties => ({
-    flex: 1,
-    padding: '6px 2px',
-    border: 'none',
-    borderBottom: activeTab === tab ? '3px solid #3b82f6' : '3px solid transparent',
-    background: 'transparent',
-    fontSize: '0.7rem',
-    fontWeight: activeTab === tab ? 700 : 500,
-    color: activeTab === tab ? '#3b82f6' : '#94a3b8',
-    cursor: 'pointer',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '2px',
-    transition: 'all 0.15s',
-    textTransform: 'uppercase',
-    letterSpacing: '0.2px',
-  });
-
   return (
     <div className="ael-app aelscan-app" style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f8fafc', overflow: 'hidden', position: 'relative' }}>
       {/* Header */}
@@ -771,178 +737,86 @@ const LegacyAelScanApp: React.FC = () => {
         <div style={{ height: '100%', width: progressPct + '%', background: progressPct === 100 ? '#34d399' : isDay2 ? 'linear-gradient(90deg, #84cc16, #facc15)' : '#3b82f6', transition: 'width 0.4s ease' }} />
       </div>
 
-      {/* COMPLIANCE COMPARISON ENGINE WORKSPACE (STRICTLY FIXED HEIGHT: 65px) */}
-      <div id="scan-comparison-module" className="aelscan-comparison" style={{ padding: '6px 10px', background: '#f1f5f9', borderBottom: '1px solid #cbd5e1', flexShrink: 0, height: '65px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ fontSize: '0.62rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '3px', letterSpacing: '0.3px' }}>
-          Módulo de Confrontación
-        </div>
-
-        {isDay2 ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
-            <div style={{ display: 'flex', gap: '3px', flex: 1, overflow: 'hidden', alignItems: 'center' }}>
-              {selectedEvIds.length === 0 ? (
-                <span style={{ fontSize: '0.65rem', color: '#64748b' }}>Esperando una evidencia compatible.</span>
-              ) : (
-                <div style={{ display: 'flex', gap: '3px' }}>
-                  {selectedEvIds.map(evId => (
-                    <span key={evId} style={{ fontSize: '0.58rem', background: '#3b82f6', color: 'white', padding: '1px 5px', borderRadius: '4px' }}>
-                      Pista Vinculada
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {selectedEvidence ? (
-              <div style={{ padding: '3px 6px', background: 'white', border: '1px solid #3b82f6', borderRadius: '6px', fontSize: '0.7rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                <span style={{ color: '#1e293b', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  🔍 Auditar: {getEvidenceElementName(selectedEvidence.elementId)}
-                </span>
-                <button onClick={() => { setSelectedAuditElement(null); playSound.click(gameState.soundEnabled); }} style={{ background: 'none', border: 'none', color: '#f43f5e', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold' }}>✕</button>
-              </div>
-            ) : (
-              <div style={{ padding: '4px 6px', background: '#fffbeb', border: '1px dashed #f59e0b', borderRadius: '6px', fontSize: '0.65rem', color: '#b45309', textAlign: 'center' }}>
-                Arrastra o selecciona datos de la planilla/correos.
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Tabs Menu */}
-      <div className="aelscan-tabs" style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: 'white', flexShrink: 0 }}>
-        <button style={tabStyle('reglamento')} onClick={() => { setActiveTab('reglamento'); playSound.click(gameState.soundEnabled); }}><BookOpen size={12} />Reglamento</button>
-        <button style={tabStyle('guia')} onClick={() => { setActiveTab('guia'); playSound.click(gameState.soundEnabled); }}><GuideIcon size={12} />Guía</button>
-      </div>
-
-      {/* Tab Contents */}
+      {/* Regulation contents */}
       <div
         className="aelscan-content"
         onScroll={hideRuleClue}
         style={{ flex: 1, overflowY: 'auto', padding: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}
       >
 
-        {/* TAB 1: REGLAMENTO (Dynamic lists, drag highlight target, and clues on hover) */}
-        {activeTab === 'reglamento' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '2px' }}>
-              {ARTICLES.length} Pilares de la Ley 21.719
-            </div>
-            {ARTICLES.map(article => {
-              const isRuleSelected = gameState.selectedRuleId === article.id;
-              const isHovered = hoveredRuleId === article.id;
-              const isDragOver = isDragOverCardId === article.id;
-
-              return (
-                <div
-                  id={'rule-card-' + article.id}
-                  key={article.id}
-                  tabIndex={0}
-                  aria-describedby={isHovered ? `rule-clue-${article.id}` : undefined}
-                  onMouseEnter={(e) => showRuleClue(e.currentTarget, article.id)}
-                  onMouseLeave={hideRuleClue}
-                  onFocus={(e) => showRuleClue(e.currentTarget, article.id)}
-                  onBlur={hideRuleClue}
-                  onDragOver={(e) => handleDragOver(e, article.id)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, article.id)}
-                  onClick={() => {
-                    const nextRuleId = isRuleSelected ? null : article.id;
-                    setSelectedRuleId(nextRuleId);
-                    if (isDay2 && nextRuleId && selectedEvIds.length === 1) {
-                      handleConfront(nextRuleId, selectedEvIds[0]);
-                    }
-                    playSound.click(gameState.soundEnabled);
-                  }}
-                  style={{
-                    padding: '6px 8px',
-                    background: isDragOver
-                      ? '#eff6ff'
-                      : isRuleSelected
-                        ? 'rgba(59,130,246,0.04)'
-                        : 'white',
-                    border: isDragOver
-                      ? '2px dashed #3b82f6'
-                      : isRuleSelected
-                        ? '1.5px solid #3b82f6'
-                        : '1px solid #e2e8f0',
-                    borderLeft: '4px solid #3b82f6',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s',
-                    boxShadow: isRuleSelected ? '0 1px 4px rgba(59,130,246,0.08)' : 'none'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', fontWeight: 700, color: '#1e293b' }}>
-                      {article.title}
-                      <HelpCircle size={11} color="#64748b" aria-hidden="true" />
-                    </div>
-                    {isRuleSelected && (
-                      <span style={{ fontSize: '0.52rem', background: '#3b82f6', color: 'white', padding: '0.5px 4px', borderRadius: '999px', fontWeight: 700 }}>
-                        Sel
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ fontStyle: 'italic', fontSize: '0.62rem', color: '#1e3a8a', background: '#eff6ff', padding: '3px 5px', borderRadius: '4px', margin: '3px 0' }}>
-                    {article.question}
-                  </div>
-
-                  <p style={{ fontSize: '0.65rem', color: '#475569', lineHeight: '1.25', margin: 0 }}>{article.summary}</p>
-                </div>
-              );
-            })}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: '2px' }}>
+            {ARTICLES.length} Pilares de la Ley 21.719
           </div>
-        )}
+          {ARTICLES.map(article => {
+            const isRuleSelected = gameState.selectedRuleId === article.id;
+            const isHovered = hoveredRuleId === article.id;
+            const isDragOver = isDragOverCardId === article.id;
+            const ruleBorder = isDragOver
+              ? '2px dashed #3b82f6'
+              : isRuleSelected
+                ? '1.5px solid #3b82f6'
+                : '1px solid #e2e8f0';
 
-        {/* TAB 2: GUIA */}
-        {activeTab === 'guia' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div className="aelscan-guide-note" style={{ background: 'linear-gradient(135deg,#eff6ff,#f5f3ff)', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '8px 10px', fontSize: '0.72rem', color: '#1e40af', lineHeight: '1.35' }}>
-              <strong>📋 Protocolo del Auditor</strong><br />
-              Sigue las instrucciones para resolver el caso.
-            </div>
+            return (
+              <div
+                id={'rule-card-' + article.id}
+                key={article.id}
+                tabIndex={0}
+                aria-describedby={isHovered ? `rule-clue-${article.id}` : undefined}
+                onMouseEnter={(e) => showRuleClue(e.currentTarget, article.id)}
+                onMouseLeave={hideRuleClue}
+                onFocus={(e) => showRuleClue(e.currentTarget, article.id)}
+                onBlur={hideRuleClue}
+                onDragOver={(e) => handleDragOver(e, article.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, article.id)}
+                onClick={() => {
+                  const nextRuleId = isRuleSelected ? null : article.id;
+                  setSelectedRuleId(nextRuleId);
+                  if (isDay2 && nextRuleId && selectedEvIds.length === 1) {
+                    handleConfront(nextRuleId, selectedEvIds[0]);
+                  }
+                  playSound.click(gameState.soundEnabled);
+                }}
+                style={{
+                  padding: '6px 8px',
+                  background: isDragOver
+                    ? '#eff6ff'
+                    : isRuleSelected
+                      ? 'rgba(59,130,246,0.04)'
+                      : 'white',
+                  borderTop: ruleBorder,
+                  borderRight: ruleBorder,
+                  borderBottom: ruleBorder,
+                  borderLeft: '4px solid #3b82f6',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                  boxShadow: isRuleSelected ? '0 1px 4px rgba(59,130,246,0.08)' : 'none'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', fontWeight: 700, color: '#1e293b' }}>
+                    {article.title}
+                    <HelpCircle size={11} color="#64748b" aria-hidden="true" />
+                  </div>
+                  {isRuleSelected && (
+                    <span style={{ fontSize: '0.52rem', background: '#3b82f6', color: 'white', padding: '0.5px 4px', borderRadius: '999px', fontWeight: 700 }}>
+                      Sel
+                    </span>
+                  )}
+                </div>
 
-            {!isDay2 ? (
-              // Case 1 Guide
-              [
-                { n: '1', title: 'Arrastra la evidencia', desc: 'Haz click y arrastra un dato sospechoso (ej. CC en Mail o columnas en Excel) y suéltalo sobre uno de los pilares de AelScan.' },
-                { n: '2', title: 'Comprobación automática', desc: 'El sistema verificará de inmediato si coincide. El diagnóstico flotante se abrirá solo.' },
-                { n: '3', title: 'Sigue el checklist', desc: 'Pon el cursor sobre cada pilar para ver qué hallazgos faltan y cuáles ya documentaste.' }
-              ].map(step => (
-                <div key={step.n} className="aelscan-guide-step" style={{ display: 'flex', gap: '6px', padding: '6px 8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                  <div className="aelscan-guide-step__number" style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', fontSize: '0.65rem', fontWeight: 900, flexShrink: 0, justifyContent: 'center' }}>
-                    {step.n}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#1e293b' }}>{step.title}</div>
-                    <div style={{ fontSize: '0.65rem', color: '#475569', lineHeight: '1.25' }}>{step.desc}</div>
-                  </div>
+                <div style={{ fontStyle: 'italic', fontSize: '0.62rem', color: '#1e3a8a', background: '#eff6ff', padding: '3px 5px', borderRadius: '4px', margin: '3px 0' }}>
+                  {article.question}
                 </div>
-              ))
-            ) : (
-              // Case 2 Guide
-              [
-                { n: '1', title: 'Arrastra evidencias', desc: 'Arrastra mensajes o fichas desde El Chat. Para la planilla, ábrela y arrastra desde Excel el nombre que aparece junto a “Libro:”.' },
-                { n: '2', title: 'Documenta cada evidencia', desc: 'Cada elemento confirmado registra una infracción independiente, aunque pueda relacionarse con más de un pilar.' },
-                { n: '3', title: 'Prepara el plan final', desc: 'Al resolver las 7 infracciones, El Chat habilitará las acciones para cerrar el caso.' }
-              ].map(step => (
-                <div key={step.n} className="aelscan-guide-step" style={{ display: 'flex', gap: '6px', padding: '6px 8px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '6px' }}>
-                  <div className="aelscan-guide-step__number" style={{ width: '18px', height: '18px', borderRadius: '50%', background: '#3b82f6', color: 'white', display: 'flex', alignItems: 'center', fontSize: '0.65rem', fontWeight: 900, flexShrink: 0, justifyContent: 'center' }}>
-                    {step.n}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#1e293b' }}>{step.title}</div>
-                    <div style={{ fontSize: '0.65rem', color: '#475569', lineHeight: '1.25' }}>{step.desc}</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+
+                <p style={{ fontSize: '0.65rem', color: '#475569', lineHeight: '1.25', margin: 0 }}>{article.summary}</p>
+              </div>
+            );
+          })}
+        </div>
 
       </div>
 
@@ -1051,7 +925,7 @@ const LegacyAelScanApp: React.FC = () => {
                       borderColor: comparisonResult.alreadyResolved ? '#10b981' : comparisonResult.result === 'violation' ? '#f43f5e' : comparisonResult.result === 'compliant' ? '#10b981' : undefined,
                     }}
                   >
-                    Aceptar / Limpiar
+                    Aceptar
                   </button>
                 </motion.div>
               )

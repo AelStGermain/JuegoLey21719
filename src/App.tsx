@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { GameStateProvider, useGameState } from './game/GameStateContext';
 import { WindowManagerProvider, useWindowManager } from './game/WindowManagerContext';
 import Desktop from './desktop/Desktop';
@@ -8,19 +8,24 @@ import AelScanApp from './applications/aelscan/AelScanApp';
 import AelChatApp from './applications/aelchat/AelChatApp';
 import SplashScreen from './components/SplashScreen';
 import ExperienceScreen, { SHOW_GAME_INTRO_EVENT } from './components/ExperienceScreen';
-import { Mail, FileSpreadsheet, ShieldAlert, Volume2, VolumeX, RefreshCw, MessageSquare } from 'lucide-react';
+import { Mail, FileSpreadsheet, ShieldAlert, Volume2, VolumeX, RefreshCw, MessageSquare, CircleHelp } from 'lucide-react';
 import { playSound } from './components/sound';
 import { getCaseProgressPosition, isApplicationAvailableInCase } from './desktop/caseApplications';
 import { Case3Provider } from './game/Case3Context';
+import CaseTutorial, { type CaseTutorialStep } from './components/CaseTutorial';
+import CompletionScreen from './components/CompletionScreen';
 
 type MobileAppId = 'mail' | 'spreadsheet' | 'aelscan' | 'aelchat';
 
 const ResponsiveLayout: React.FC = () => {
-  const { state: gameState, toggleSound, resetGame, progressDay } = useGameState();
-  const { openWindow } = useWindowManager();
+  const { state: gameState, toggleSound, resetGame, progressDay, completeTutorial } = useGameState();
+  const { openWindow, prepareCaseWorkspace } = useWindowManager();
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<MobileAppId>('mail');
   const [hasEntered, setHasEntered] = useState<boolean>(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+
+  const tutorialSeen = Boolean(gameState.flags[`tutorialCase${gameState.currentDay}Seen`]);
 
   // Detect mobile viewport size
   useEffect(() => {
@@ -50,6 +55,29 @@ const ResponsiveLayout: React.FC = () => {
   useEffect(() => {
     setActiveTab(gameState.currentDay === 2 ? 'aelchat' : 'mail');
   }, [gameState.currentDay]);
+
+  useEffect(() => {
+    if (!hasEntered || !isMobile || gameState.workdayStatus !== 'active') {
+      setTutorialOpen(false);
+      return;
+    }
+    setTutorialOpen(!tutorialSeen);
+  }, [gameState.currentDay, gameState.workdayStatus, hasEntered, isMobile, tutorialSeen]);
+
+  const handleMobileTutorialStep = useCallback((step: CaseTutorialStep) => {
+    if (!step.appId) return;
+    setActiveTab(step.appId);
+    if (step.appId !== 'aelscan') openWindow(step.appId);
+  }, [openWindow]);
+
+  const handleMobileTutorialComplete = useCallback(() => {
+    completeTutorial(gameState.currentDay);
+    setTutorialOpen(false);
+    const startingApp: MobileAppId = gameState.currentDay === 2 ? 'aelchat' : 'mail';
+    setActiveTab(startingApp);
+    openWindow(startingApp);
+    playSound.chime(gameState.soundEnabled);
+  }, [completeTutorial, gameState.currentDay, gameState.soundEnabled, openWindow]);
 
   // If not mobile, render the full multi-window desktop
   if (!hasEntered) {
@@ -106,10 +134,23 @@ const ResponsiveLayout: React.FC = () => {
           <button
             className="retro-btn primary"
             style={{ padding: '4px 8px' }}
-            onClick={() => { resetGame(); setHasEntered(false); }}
+            onClick={() => { prepareCaseWorkspace(1); resetGame(); setHasEntered(false); }}
             title="Reiniciar Simulación"
           >
             <RefreshCw size={12} />
+          </button>
+
+          <button
+            className="retro-btn tutorial-replay-button"
+            style={{ padding: '4px 8px' }}
+            onClick={() => {
+              setTutorialOpen(true);
+              playSound.click(gameState.soundEnabled);
+            }}
+            title={`Ver guía del Caso ${gameState.currentDay}`}
+            aria-label={`Ver guía del Caso ${gameState.currentDay}`}
+          >
+            <CircleHelp size={13} />
           </button>
         </div>
       </div>
@@ -142,6 +183,7 @@ const ResponsiveLayout: React.FC = () => {
         }}
       >
         {isApplicationAvailableInCase(gameState.currentDay, 'mail') && <button
+          data-tutorial-target="mail"
           onClick={() => handleTabChange('mail')}
           style={{
             flex: 1,
@@ -163,6 +205,7 @@ const ResponsiveLayout: React.FC = () => {
         </button>}
 
         {isApplicationAvailableInCase(gameState.currentDay, 'spreadsheet') && <button
+          data-tutorial-target="spreadsheet"
           onClick={() => handleTabChange('spreadsheet')}
           style={{
             flex: 1,
@@ -184,6 +227,7 @@ const ResponsiveLayout: React.FC = () => {
         </button>}
 
         <button
+          data-tutorial-target="aelscan"
           onClick={() => handleTabChange('aelscan')}
           style={{
             flex: 1,
@@ -205,6 +249,7 @@ const ResponsiveLayout: React.FC = () => {
         </button>
 
         {isApplicationAvailableInCase(gameState.currentDay, 'aelchat') && <button
+          data-tutorial-target="aelchat"
           onClick={() => handleTabChange('aelchat')}
           style={{
             flex: 1,
@@ -226,30 +271,30 @@ const ResponsiveLayout: React.FC = () => {
         </button>}
       </div>
 
+      <CaseTutorial
+        caseId={gameState.currentDay}
+        open={tutorialOpen && gameState.workdayStatus === 'active'}
+        onComplete={handleMobileTutorialComplete}
+        onStepChange={handleMobileTutorialStep}
+      />
+
       {/* Mobile case transition — one click anywhere advances. */}
       {gameState.workdayStatus === 'transitioning' && (
         gameState.currentDay === 1 ? (
           <ExperienceScreen
             theme="case2"
-            eyebrow="MedVibe · Segundo día"
-            title="Te agregaron a un grupo."
-            lead="Eres parte del equipo de MedVibe y acabas de entrar al grupo de Administración. Mientras lees la conversación, notas que se comentan asuntos personales y que hay personas que quizá ya no deberían tener acceso."
+            title="Algo discuten en el grupo."
+            lead="En el Chat de Administración se compartieron datos personales y hay accesos que podrían estar desactualizados."
             caseLabel="Caso 2 · Comunicación y acceso"
             caseTitle="Una conversación que parecía rutinaria."
-            description="Carolina está reorganizando turnos y comparte una planilla de personal. Lee lo que ocurrió, revisa quiénes siguen en el grupo y comprueba qué información quedó disponible."
-            steps={[
-              'Lee los mensajes y revisa los perfiles y archivos del grupo.',
-              'Abre la planilla compartida y lleva los 7 hallazgos a AelScan.',
-              'Cuando termines, vuelve al Chat y realiza las 3 acciones disponibles.',
-            ]}
-            tools={['Chat', 'Excel', 'AelScan']}
-            metrics={[
-              { value: '7', label: 'evidencias' },
-              { value: '4', label: 'pilares' },
-              { value: '3', label: 'acciones finales' },
-            ]}
-            continueLabel="Haz clic para entrar al Caso 2"
+            description="Entra al escritorio. El tutorial te mostrará por dónde comenzar."
+            steps={[]}
+            tools={[]}
+            metrics={[]}
+            compact
+            continueLabel="Comenzar Caso 2"
             onContinue={() => {
+              prepareCaseWorkspace(2);
               progressDay(2, null, { workdayProgressed: true });
               setActiveTab('aelchat');
               openWindow('aelchat');
@@ -259,25 +304,18 @@ const ResponsiveLayout: React.FC = () => {
         ) : gameState.currentDay === 2 ? (
           <ExperienceScreen
             theme="case2"
-            eyebrow="MedVibe · Último minuto"
-            title="Evita que este correo salga mal."
-            lead="RRHH está por enviar un aviso de pago a todo el personal. Hay tres cosas extrañas que debes encontrar antes de enviarlo."
+            title="Un correo saldrá en 30 segundos."
+            lead="RRHH programó un envío masivo. Hay tres riesgos que deben corregirse antes de que termine la cuenta regresiva."
             caseLabel="Caso 3 · El correo equivocado"
-            caseTitle="Una revisión rápida antes de enviar."
-            description="Primero puedes mirar con calma. Cuando estés listo, inicia la revisión y comprueba quién lo recibirá, qué contiene y quién podrá verlo."
-            steps={[
-              'Haz clic en los destinatarios y busca una dirección extraña.',
-              'Decide si 238 personas deben ver las direcciones de los demás.',
-              'Abre los dos adjuntos y conserva solo lo necesario.',
-            ]}
-            tools={['Mail', 'Excel', 'AelScan']}
-            metrics={[
-              { value: '90 s', label: 'revisión normal' },
-              { value: '3', label: 'problemas ocultos' },
-              { value: '2', label: 'adjuntos' },
-            ]}
-            continueLabel="Haz clic para abrir el correo pendiente"
+            caseTitle="Revisa antes del envío."
+            description="Al cerrar el tutorial comenzará inmediatamente el tiempo."
+            steps={[]}
+            tools={[]}
+            metrics={[]}
+            compact
+            continueLabel="Abrir tutorial del Caso 3"
             onContinue={() => {
+              prepareCaseWorkspace(3);
               progressDay(3, {
                 id: 'case3-scheduled-mail',
                 title: 'Envío programado pendiente de revisión',
@@ -290,37 +328,9 @@ const ResponsiveLayout: React.FC = () => {
             }}
           />
         ) : (
-          <ExperienceScreen
-            theme="complete"
-            eyebrow="Auditoría finalizada"
-            title="Terminaste tu jornada."
-            lead="Revisaste información compartida, accesos desactualizados y un correo programado que podía exponer datos personales."
-            caseLabel="Simulación completada"
-            caseTitle="¡Completaste todas las simulaciones!"
-            description="La mejor respuesta reduce la exposición, deja registro y activa a quienes pueden corregir el problema."
-            result={<div className="experience-result"><strong>✓ Medidas registradas</strong>Los hallazgos y las acciones correctivas quedaron documentados.</div>}
-            steps={[
-              'Reconociste situaciones que comprometían más de un pilar.',
-              'Documentaste cada evidencia una sola vez.',
-              'Completaste acciones aplicables al trabajo diario.',
-            ]}
-            tools={[]}
-            metrics={[
-              { value: '3/3', label: 'casos completados' },
-              { value: '14', label: 'evidencias revisadas' },
-              { value: '100%', label: 'bitácora cerrada' },
-            ]}
-            credit={{
-              name: 'Sofía Gómez',
-              label: 'AelStGermain',
-              href: 'https://github.com/AelStGermain',
-              portfolio: {
-                label: 'Ver portafolio',
-                href: 'https://aelstgermain.github.io/Aelita/',
-              },
-            }}
-            continueLabel="Haz clic para volver a jugar"
-            onContinue={() => {
+          <CompletionScreen
+            onRestart={() => {
+              prepareCaseWorkspace(1);
               resetGame();
               setHasEntered(false);
               playSound.chime(gameState.soundEnabled);

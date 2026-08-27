@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -23,7 +23,7 @@ interface ExperienceMetric {
 
 interface ExperienceScreenProps {
   theme: ExperienceTheme;
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   lead: string;
   caseLabel: string;
@@ -36,6 +36,7 @@ interface ExperienceScreenProps {
   onContinue: () => void;
   result?: React.ReactNode;
   requireExplicitAction?: boolean;
+  compact?: boolean;
   credit?: {
     name: string;
     label: string;
@@ -69,26 +70,27 @@ export const ExperienceScreen: React.FC<ExperienceScreenProps> = ({
   onContinue,
   result,
   requireExplicitAction = false,
+  compact = false,
   credit,
 }) => {
   const [isLeaving, setIsLeaving] = useState(false);
-  const leaveTimer = useRef<number | null>(null);
+  const isLeavingRef = useRef(false);
 
   const handleContinue = () => {
-    if (isLeaving) return;
+    if (isLeavingRef.current) return;
+    isLeavingRef.current = true;
     setIsLeaving(true);
-    leaveTimer.current = window.setTimeout(onContinue, 560);
+    // Advance in the same interaction. Waiting for the exit animation used to
+    // leave only the wallpaper visible when the screen was remounted or its
+    // timer was cancelled during the Case 2 -> Case 3 transition.
+    onContinue();
   };
-
-  useEffect(() => () => {
-    if (leaveTimer.current !== null) window.clearTimeout(leaveTimer.current);
-  }, []);
 
   const HeroIcon = theme === 'complete' ? ShieldCheck : theme === 'case2' ? MessageSquare : Sparkles;
 
   return (
     <motion.div
-      className={`experience-screen experience-screen--${theme}`}
+      className={`experience-screen experience-screen--${theme}${compact ? ' experience-screen--compact' : ''}`}
       role={requireExplicitAction ? undefined : 'button'}
       tabIndex={requireExplicitAction ? -1 : 0}
       aria-label={requireExplicitAction ? undefined : continueLabel}
@@ -147,18 +149,18 @@ export const ExperienceScreen: React.FC<ExperienceScreenProps> = ({
             </div>
           </div>
 
-          <div className="experience-card__eyebrow">{eyebrow}</div>
+          {eyebrow && <div className="experience-card__eyebrow">{eyebrow}</div>}
           <h1>{title}</h1>
           <p className="experience-card__lead">{lead}</p>
 
-          <div className="experience-card__metrics">
+          {metrics.length > 0 && <div className="experience-card__metrics">
             {metrics.map(metric => (
               <div key={metric.label} className="experience-card__metric">
                 <strong>{metric.value}</strong>
                 <span>{metric.label}</span>
               </div>
             ))}
-          </div>
+          </div>}
         </section>
 
         <section className="experience-card__briefing">
@@ -168,7 +170,7 @@ export const ExperienceScreen: React.FC<ExperienceScreenProps> = ({
 
           {result}
 
-          <div className="experience-card__steps">
+          {steps.length > 0 && <div className="experience-card__steps">
             {steps.map((step, index) => (
               <motion.div
                 key={step}
@@ -181,9 +183,9 @@ export const ExperienceScreen: React.FC<ExperienceScreenProps> = ({
                 <p>{step}</p>
               </motion.div>
             ))}
-          </div>
+          </div>}
 
-          <div className="experience-card__tools" aria-label="Aplicaciones del caso">
+          {tools.length > 0 && <div className="experience-card__tools" aria-label="Aplicaciones del caso">
             {tools.map(tool => {
               const ToolIcon = toolIcons[tool];
               return (
@@ -192,7 +194,7 @@ export const ExperienceScreen: React.FC<ExperienceScreenProps> = ({
                 </span>
               );
             })}
-          </div>
+          </div>}
 
           {credit && (
             <div className="experience-card__credit" onClick={event => event.stopPropagation()}>

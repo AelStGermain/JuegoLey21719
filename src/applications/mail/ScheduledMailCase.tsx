@@ -7,8 +7,6 @@ import {
   FileSpreadsheet,
   FileText,
   MailCheck,
-  Pause,
-  Play,
   Send,
   Trash2,
   X,
@@ -16,6 +14,8 @@ import {
 import { useWindowManager } from '../../game/WindowManagerContext';
 import { useCase3 } from '../../game/Case3Context';
 import { getCase3CorrectedCount, scenario3, type Case3Attachment, type Case3Recipient } from '../../content/scenario_3';
+import ComplianceSummary from '../../components/ComplianceSummary';
+import { COMPLIANCE_PRACTICAL_TIPS } from '../../content/complianceGuidance';
 import './ScheduledMailCase.css';
 
 const formatTime = (seconds: number) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
@@ -45,11 +45,6 @@ export const ScheduledMailCase: React.FC = () => {
   const { openWindow } = useWindowManager();
   const {
     state,
-    challengeAvailable,
-    startReview,
-    startChallenge,
-    togglePause,
-    pauseForDeepReview,
     selectArtifact,
     removeRecipient,
     protectAudience,
@@ -85,7 +80,6 @@ export const ScheduledMailCase: React.FC = () => {
   const openAttachment = (attachment: Case3Attachment) => {
     if (attachment.type === 'spreadsheet') {
       selectArtifact('payroll');
-      pauseForDeepReview();
       openWindow('spreadsheet');
       return;
     }
@@ -94,16 +88,8 @@ export const ScheduledMailCase: React.FC = () => {
 
   const renderTimer = () => (
     <div className={`case3-timer ${state.secondsRemaining <= 10 && state.timerStatus === 'running' ? 'is-urgent' : ''}`}>
-      <span>{state.timerStatus === 'initial' ? 'EN ESPERA DE REVISIÓN' : state.timerStatus === 'paused' ? 'REVISIÓN PAUSADA' : state.challengeMode ? 'MODO DESAFÍO' : 'TIEMPO DE REVISIÓN'}</span>
+      <span>{state.timerStatus === 'initial' ? 'COMIENZA AL CERRAR LA GUÍA' : 'TIEMPO DE REVISIÓN'}</span>
       <strong>{formatTime(state.secondsRemaining)}</strong>
-      {state.timerStatus === 'initial' ? (
-        <div className="case3-timer__starts">
-          <button type="button" onClick={startReview}><Play size={13} /> Iniciar revisión</button>
-          {challengeAvailable && <button type="button" className="is-challenge" onClick={startChallenge}>Desafío · 00:45</button>}
-        </div>
-      ) : (
-        <button type="button" onClick={togglePause}><>{state.timerStatus === 'running' ? <Pause size={13} /> : <Play size={13} />}{state.timerStatus === 'running' ? ' Pausar' : ' Reanudar'}</></button>
-      )}
     </div>
   );
 
@@ -127,7 +113,7 @@ export const ScheduledMailCase: React.FC = () => {
       </AnimatePresence>
 
       <main className="case3-compose">
-        <section className="case3-compose__headers">
+        <section className="case3-compose__headers" data-tutorial-target="case3-recipients">
           <div className="case3-compose__sender"><b>De</b><span>{scenario3.sender}</span></div>
           <div className="case3-recipient-row">
             <b>Para</b>
@@ -189,7 +175,7 @@ export const ScheduledMailCase: React.FC = () => {
 
         <section className="case3-compose__body"><p>{scenario3.body}</p></section>
 
-        <section className="case3-attachments">
+        <section className="case3-attachments" data-tutorial-target="case3-attachments">
           <div className="case3-attachments__heading"><span>Adjuntos</span><b>{activeAttachments.length}</b></div>
           <div className="case3-attachments__list">
             <AnimatePresence mode="popLayout">
@@ -214,7 +200,7 @@ export const ScheduledMailCase: React.FC = () => {
         </section>
       </main>
 
-      <footer className={`case3-mail__footer ${correctedCount === 3 ? 'is-ready' : ''}`}>
+      <footer className={`case3-mail__footer ${correctedCount === 3 ? 'is-ready' : ''}`} data-tutorial-target="case3-send">
         <div><span>RIESGOS CORREGIDOS</span><ProgressDots count={correctedCount} /></div>
         <button type="button" onClick={openPreflight}><Send size={15} /> {correctedCount === 3 ? 'Enviar correo' : 'Enviar'}</button>
       </footer>
@@ -243,44 +229,19 @@ export const ScheduledMailCase: React.FC = () => {
     if (!evaluation) return null;
     return (
       <div className={`case3-result case3-result--${evaluation.level}`}>
-        <header className="case3-result__hero">
-          {evaluation.level === 'perfect' ? <MailCheck size={30} /> : <Clock3 size={30} />}
-          <span>{state.sentAutomatically ? 'EL TIEMPO TERMINÓ' : 'ENVÍO FINALIZADO'}</span>
-          <h2>{evaluation.title}</h2>
-          <p>{evaluation.summary}</p>
-        </header>
-
-        {evaluation.level !== 'perfect' && (
-          <section className="case3-consequences">
-            <strong>MENSAJES RECIBIDOS DESPUÉS DEL ENVÍO</strong>
-            {evaluation.checks.filter(check => !check.passed).map(check => (
-              <article key={check.id}>
-                <span>🔔 Nuevo correo</span>
-                <p>{check.id === 'recipient'
-                  ? 'Hola. Creo que este mensaje no era para mí. Recibí información de varias personas.'
-                  : check.id === 'privacy'
-                    ? '¿Por qué puedo ver las direcciones de todos los demás trabajadores?'
-                    : '¿Era necesario que todos recibiéramos la nómina con los sueldos?'}</p>
-              </article>
-            ))}
-          </section>
-        )}
-
-        <section className="case3-result__lesson">
-          <span>LO QUE ACABAS DE HACER</span>
-          {evaluation.checks.map(check => (
-            <div key={check.id} className={check.passed ? 'is-passed' : 'is-missed'}>
-              <b>{check.passed ? <Check size={13} /> : <X size={13} />}</b>
-              <p><strong>{check.pillar}</strong>{check.detail}</p>
-            </div>
-          ))}
-        </section>
-
-        <blockquote>¿Quién lo recibirá? · ¿Qué estoy compartiendo? · ¿Realmente hace falta?</blockquote>
-        <div className="case3-result__actions">
-          {evaluation.level !== 'perfect' && <button type="button" onClick={retryCase3}>Reintentar</button>}
-          <button type="button" onClick={finishScenario}>Continuar</button>
-        </div>
+        <ComplianceSummary
+          caseLabel="Caso 3"
+          tone={evaluation.level === 'perfect' ? 'success' : 'warning'}
+          title={evaluation.level === 'perfect' ? 'El correo salió protegido' : 'El correo salió con riesgos pendientes'}
+          summary={evaluation.level === 'perfect'
+            ? 'Corregiste destinatarios, privacidad y adjuntos antes del envío.'
+            : `${evaluation.correctedCount} de 3 riesgos fueron corregidos antes de que el correo saliera.`}
+          tips={[...COMPLIANCE_PRACTICAL_TIPS.case3]}
+          actions={<>
+            {evaluation.level !== 'perfect' && <button type="button" onClick={retryCase3}>Reintentar</button>}
+            <button type="button" onClick={finishScenario}>Continuar</button>
+          </>}
+        />
       </div>
     );
   };

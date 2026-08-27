@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useMemo, useState, ReactNode } from 'react';
 import { WindowState, WindowManagerState } from './types';
+import { createDefaultWindows, DEFAULT_WINDOWS, prepareWindowsForCase } from './windowWorkspace';
 
 interface WindowManagerContextProps {
   state: WindowManagerState;
@@ -10,45 +11,13 @@ interface WindowManagerContextProps {
   focusWindow: (id: string) => void;
   updateWindowPosition: (id: string, x: number, y: number) => void;
   autoArrange: () => void;
+  prepareCaseWorkspace: (day: number) => void;
 }
-
-const DEFAULT_WINDOWS: WindowState[] = [
-  {
-    id: 'mail',
-    title: 'AelMail - Correo Corporativo',
-    isOpen: false,
-    isMinimized: false,
-    isMaximized: false,
-    zIndex: 1,
-    position: { x: 50, y: 50 },
-    size: { width: 760, height: 530 }
-  },
-  {
-    id: 'spreadsheet',
-    title: 'AelSheet - Editor de Planillas',
-    isOpen: false,
-    isMinimized: false,
-    isMaximized: false,
-    zIndex: 1,
-    position: { x: 90, y: 80 },
-    size: { width: 780, height: 480 }
-  },
-  {
-    id: 'aelchat',
-    title: 'AelChat - Mensajería Corporativa',
-    isOpen: false,
-    isMinimized: false,
-    isMaximized: false,
-    zIndex: 1,
-    position: { x: 140, y: 100 },
-    size: { width: 680, height: 540 }
-  }
-];
 
 const WindowManagerContext = createContext<WindowManagerContextProps | undefined>(undefined);
 
 export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [windows, setWindows] = useState<WindowState[]>(DEFAULT_WINDOWS);
+  const [windows, setWindows] = useState<WindowState[]>(createDefaultWindows);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
 
   const openWindow = useCallback((id: string, title?: string) => {
@@ -162,6 +131,11 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
     );
   }, []);
 
+  const prepareCaseWorkspace = useCallback((day: number) => {
+    setWindows(prev => prepareWindowsForCase(prev, day));
+    setActiveWindowId(day === 2 ? 'aelchat' : 'mail');
+  }, []);
+
   const value = useMemo<WindowManagerContextProps>(() => ({
     state: { windows, activeWindowId },
     openWindow,
@@ -171,6 +145,7 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
     focusWindow,
     updateWindowPosition,
     autoArrange,
+    prepareCaseWorkspace,
   }), [
     windows,
     activeWindowId,
@@ -181,6 +156,7 @@ export const WindowManagerProvider: React.FC<{ children: ReactNode }> = ({ child
     focusWindow,
     updateWindowPosition,
     autoArrange,
+    prepareCaseWorkspace,
   ]);
 
   return (

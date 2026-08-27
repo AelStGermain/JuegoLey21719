@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useWindowManager } from '../game/WindowManagerContext';
 import { useGameState } from '../game/GameStateContext';
 import {
@@ -9,6 +9,9 @@ import {
   RefreshCw,
   LayoutGrid,
   MessageSquare,
+  CircleHelp,
+  CircleCheck,
+  LockKeyhole,
 } from 'lucide-react';
 import { playSound } from '../components/sound';
 import Window from '../components/Window';
@@ -26,6 +29,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCaseApplicationIds, getCaseProgressPosition, isApplicationAvailableInCase } from './caseApplications';
 import { useCase3 } from '../game/Case3Context';
+import CaseTutorial, { type CaseTutorialStep } from '../components/CaseTutorial';
+import CompletionScreen from '../components/CompletionScreen';
 
 // Animated Bezier Connection Overlay
 const ConnectionOverlay: React.FC<{
@@ -173,6 +178,7 @@ export const Desktop: React.FC = () => {
     triggerNotification,
     progressDay,
     setStatus,
+    completeTutorial,
     resetGame,
   } = useGameState();
 
@@ -180,9 +186,32 @@ export const Desktop: React.FC = () => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [showCase1CompletionNotice, setShowCase1CompletionNotice] = useState(false);
   const [showCase2CompletionNotice, setShowCase2CompletionNotice] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const milestoneAnnouncedRef = useRef({ case1: false, case2: false });
   const case1NoticeDismissedRef = useRef(false);
   const case2NoticeDismissedRef = useRef(false);
+
+  const tutorialSeen = Boolean(gameState.flags[`tutorialCase${gameState.currentDay}Seen`]);
+
+  useEffect(() => {
+    if (gameState.workdayStatus !== 'active') {
+      setTutorialOpen(false);
+      return;
+    }
+    setTutorialOpen(!tutorialSeen);
+  }, [gameState.currentDay, gameState.workdayStatus, tutorialSeen]);
+
+  const handleTutorialStep = useCallback((step: CaseTutorialStep) => {
+    if (!step.appId || step.appId === 'aelscan') return;
+    openWindow(step.appId);
+  }, [openWindow]);
+
+  const handleTutorialComplete = useCallback(() => {
+    completeTutorial(gameState.currentDay);
+    setTutorialOpen(false);
+    openWindow(gameState.currentDay === 2 ? 'aelchat' : 'mail');
+    playSound.chime(gameState.soundEnabled);
+  }, [completeTutorial, gameState.currentDay, gameState.soundEnabled, openWindow]);
 
   // Clock
   useEffect(() => {
@@ -216,7 +245,10 @@ export const Desktop: React.FC = () => {
       } else if (gameState.currentDay === 3) {
         closeWindow('aelchat');
         closeWindow('spreadsheet');
-        openWindow('mail');
+        // Open after the Case 3 window tree has mounted. This also recovers
+        // from a stale test/HMR state where every movable window was closed.
+        const frameId = window.requestAnimationFrame(() => openWindow('mail'));
+        return () => window.cancelAnimationFrame(frameId);
       }
     }
   }, [gameState.currentDay, gameState.workdayStatus, closeWindow, openWindow]);
@@ -262,7 +294,6 @@ export const Desktop: React.FC = () => {
       message: 'RRHH programó una comunicación masiva. AelMail espera tu revisión antes de iniciar la cuenta regresiva.',
       appToOpen: 'mail',
     }, { case3Started: true });
-    openWindow('mail');
     playSound.chime(gameState.soundEnabled);
   };
 
@@ -272,6 +303,7 @@ export const Desktop: React.FC = () => {
   const documentedCase2FindingCount = CASE2_FINDING_IDS.filter(id => gameState.evidenceFound.includes(id)).length;
   const isMilestoneNotification = gameState.activeNotification?.id.startsWith('milestone-') ?? false;
   const case1AuditComplete = scenario1.evidences.every(evidence => gameState.evidenceFound.includes(evidence.id));
+  const case1AuditAcknowledged = Boolean(gameState.flags.case1AuditAcknowledged);
   const hasValidCase1Reply = scenario1.decision.choices.some(
     choice => choice.id === gameState.decisionsMade[scenario1.decision.id],
   );
@@ -280,17 +312,18 @@ export const Desktop: React.FC = () => {
     const shouldShowNotice = gameState.currentDay === 1
       && gameState.workdayStatus === 'active'
       && case1AuditComplete
+      && case1AuditAcknowledged
       && !hasValidCase1Reply;
 
     if (shouldShowNotice && !case1NoticeDismissedRef.current) {
       setShowCase1CompletionNotice(true);
     }
 
-    if (!case1AuditComplete) {
+    if (!case1AuditComplete || !case1AuditAcknowledged) {
       case1NoticeDismissedRef.current = false;
       setShowCase1CompletionNotice(false);
     }
-  }, [case1AuditComplete, gameState.currentDay, gameState.workdayStatus, hasValidCase1Reply]);
+  }, [case1AuditAcknowledged, case1AuditComplete, gameState.currentDay, gameState.workdayStatus, hasValidCase1Reply]);
 
   const dismissCase1CompletionNotice = () => {
     case1NoticeDismissedRef.current = true;
@@ -325,6 +358,7 @@ export const Desktop: React.FC = () => {
   useEffect(() => {
     const case1PendingReply = gameState.currentDay === 1
       && case1AuditComplete
+      && case1AuditAcknowledged
       && !hasValidCase1Reply;
     const case2PendingAction = gameState.currentDay === 2
       && documentedCase2FindingCount === CASE2_FINDING_IDS.length
@@ -358,6 +392,7 @@ export const Desktop: React.FC = () => {
     }
   }, [
     documentedCase2FindingCount,
+    case1AuditAcknowledged,
     case1AuditComplete,
     hasValidCase1Reply,
     gameState.activeNotification,
@@ -452,6 +487,7 @@ export const Desktop: React.FC = () => {
               <button
                 key={id}
                 className="desktop-shortcut"
+                data-tutorial-target={id}
                 onClick={() => handleShortcut(id)}
                 style={{ pointerEvents: 'auto', '--shortcut-accent': color } as React.CSSProperties}
               >
@@ -491,6 +527,7 @@ export const Desktop: React.FC = () => {
         {/* Right: AelScan fixed gadget panel */}
         <div
           className="aelscan-shell"
+          data-tutorial-target="aelscan"
           style={{
             width: '280px',
             flexShrink: 0,
@@ -532,6 +569,7 @@ export const Desktop: React.FC = () => {
             }}
           >
             <motion.div
+              className="case1-completion-card"
               initial={{ scale: 0.58, y: 70, rotate: -4 }}
               animate={{ scale: 1, y: 0, rotate: 0 }}
               exit={{ scale: 0.75, y: -35, opacity: 0 }}
@@ -552,6 +590,7 @@ export const Desktop: React.FC = () => {
               {[0, 1, 2, 3].map(index => (
                 <motion.span
                   key={index}
+                  className="case1-completion-card__confetti"
                   aria-hidden="true"
                   animate={{ y: [0, -13, 0], rotate: [0, 16, -8, 0], opacity: [0.55, 1, 0.55] }}
                   transition={{ duration: 1.7 + index * 0.18, repeat: Infinity, delay: index * 0.16 }}
@@ -561,22 +600,24 @@ export const Desktop: React.FC = () => {
                 </motion.span>
               ))}
               <motion.div
+                className="case1-completion-card__icon"
                 animate={{ scale: [1, 1.08, 1], rotate: [0, 2, -2, 0] }}
                 transition={{ duration: 1.8, repeat: Infinity }}
                 style={{ position: 'relative', fontSize: '3.1rem', lineHeight: 1 }}
               >
                 🎉
               </motion.div>
-              <div style={{ position: 'relative', marginTop: '10px', color: '#d9f99d', fontFamily: 'var(--font-mono)', fontWeight: 900, letterSpacing: '1px' }}>
+              <div className="case1-completion-card__eyebrow" style={{ position: 'relative', marginTop: '10px', color: '#d9f99d', fontFamily: 'var(--font-mono)', fontWeight: 900, letterSpacing: '1px' }}>
                 4/4 EVIDENCIAS DOCUMENTADAS
               </div>
-              <div style={{ position: 'relative', marginTop: '8px', fontSize: '1.5rem', fontWeight: 900, lineHeight: 1.15 }}>
+              <div className="case1-completion-card__title" style={{ position: 'relative', marginTop: '8px', fontSize: '1.5rem', fontWeight: 900, lineHeight: 1.15 }}>
                 ¡Auditoría completada!
               </div>
-              <p style={{ position: 'relative', margin: '10px auto 0', maxWidth: '390px', color: '#ede9fe', fontSize: '0.9rem', lineHeight: 1.5 }}>
-                El siguiente paso es responder el correo de Sofía. Tendrás dos alternativas y deberás elegir la acción más responsable.
+              <p className="case1-completion-card__copy" style={{ position: 'relative', margin: '10px auto 0', maxWidth: '390px', color: '#ede9fe', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                El siguiente paso es responder el correo de RRHH. Tendrás dos alternativas y deberás elegir la acción más responsable.
               </p>
               <motion.div
+                className="case1-completion-card__action"
                 animate={{ y: [0, 4, 0] }}
                 transition={{ duration: 1.1, repeat: Infinity }}
                 style={{ position: 'relative', marginTop: '18px', display: 'inline-flex', padding: '9px 18px', borderRadius: '999px', background: 'linear-gradient(90deg, #a3e635, #fde047)', color: '#365314', fontWeight: 900, fontSize: '0.8rem' }}
@@ -784,63 +825,41 @@ export const Desktop: React.FC = () => {
             <LayoutGrid size={11} /> Organizar
           </button>
 
-          {/* Selector de casos */}
-          <div className="case-switcher" style={{ display: 'flex', background: '#e2e8f0', gap: '2px', padding: '2px', border: '1px solid #cbd5e1', borderRadius: '6px', marginLeft: '4px' }}>
-            <button
-              onClick={() => {
-                resetGame();
-                playSound.chime(gameState.soundEnabled);
-              }}
-              style={{
-                background: gameState.currentDay === 1 ? '#3b82f6' : 'transparent',
-                color: gameState.currentDay === 1 ? 'white' : '#64748b',
-                border: 'none',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.15s'
-              }}
-            >
-              Caso 1
-            </button>
-            <button
-              onClick={() => {
-                progressDay(2, null, { workdayProgressed: true });
-                openWindow('aelchat');
-                playSound.chime(gameState.soundEnabled);
-              }}
-              style={{
-                background: gameState.currentDay === 2 ? 'linear-gradient(105deg, #84cc16, #facc15)' : 'transparent',
-                color: gameState.currentDay === 2 ? '#365314' : '#64748b',
-                border: 'none',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.15s'
-              }}
-            >
-              Caso 2
-            </button>
-            <button
-              onClick={handleNextCase3}
-              style={{
-                background: gameState.currentDay === 3 ? '#f3cf55' : 'transparent',
-                color: gameState.currentDay === 3 ? '#273044' : '#64748b',
-                border: 'none',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.15s'
-              }}
-            >
-              Caso 3
-            </button>
+          <button
+            className="retro-btn tutorial-replay-button"
+            style={{ fontSize: '0.78rem', padding: '3px 8px', gap: '5px' }}
+            onClick={() => {
+              setTutorialOpen(true);
+              playSound.click(gameState.soundEnabled);
+            }}
+            title={`Volver a ver la guía del Caso ${gameState.currentDay}`}
+          >
+            <CircleHelp size={12} /> Guía
+          </button>
+
+          {/* Progreso secuencial: informa el estado, pero no permite saltar casos. */}
+          <div className="case-switcher case-progress-lock" aria-label="Progreso de casos">
+            {[1, 2, 3].map(caseNumber => {
+              const isFinalCaseComplete = gameState.currentDay === 3
+                && caseNumber === 3
+                && gameState.workdayStatus !== 'active';
+              const status = caseNumber < gameState.currentDay || isFinalCaseComplete
+                ? 'complete'
+                : caseNumber === gameState.currentDay
+                  ? 'current'
+                  : 'locked';
+              return (
+                <div
+                  key={caseNumber}
+                  className={`case-progress-lock__item is-${status}`}
+                  aria-label={`Caso ${caseNumber}: ${status === 'complete' ? 'completado' : status === 'current' ? 'en curso' : 'bloqueado'}`}
+                  title={status === 'locked' ? `Completa el Caso ${caseNumber - 1} para desbloquearlo` : undefined}
+                >
+                  {status === 'complete' ? <CircleCheck size={12} /> : status === 'locked' ? <LockKeyhole size={11} /> : <span aria-hidden="true">●</span>}
+                  <b>Caso {caseNumber}</b>
+                </div>
+              );
+            })}
           </div>
 
           <div
@@ -865,8 +884,8 @@ export const Desktop: React.FC = () => {
                 : gameState.currentDay === 2
                   ? `${documentedCase2FindingCount}/${CASE2_FINDING_IDS.length} resueltas`
                   : case3State.evaluation
-                      ? `resultado ${case3State.evaluation.level}`
-                      : `${case3State.secondsRemaining}s · ${case3State.timerStatus === 'running' ? 'envío activo' : 'envío pausado'}`
+                    ? `resultado ${case3State.evaluation.level}`
+                    : `${case3State.secondsRemaining}s · ${case3State.timerStatus === 'running' ? 'envío activo' : 'envío pausado'}`
               }
             </span>
           </div>
@@ -936,7 +955,7 @@ export const Desktop: React.FC = () => {
             href="https://github.com/AelStGermain"
             target="_blank"
             rel="noreferrer"
-            title="Creado por Sofía Gómez · GitHub: AelStGermain"
+            title="Creado por Ael · GitHub: AelStGermain"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -982,6 +1001,13 @@ export const Desktop: React.FC = () => {
         </div>
       </div>
 
+      <CaseTutorial
+        caseId={gameState.currentDay}
+        open={tutorialOpen && gameState.workdayStatus === 'active'}
+        onComplete={handleTutorialComplete}
+        onStepChange={handleTutorialStep}
+      />
+
       {/* FeedbackModal */}
       {showFeedback && (
         <FeedbackModal
@@ -994,86 +1020,36 @@ export const Desktop: React.FC = () => {
         gameState.currentDay === 1 ? (
           <ExperienceScreen
             theme="case2"
-            eyebrow="MedVibe · Segundo día"
-            title="Te agregaron a un grupo."
-            lead="Eres parte del equipo de MedVibe y acabas de entrar al grupo de Administración. Mientras lees la conversación, notas que se comentan asuntos personales y que hay personas que quizá ya no deberían tener acceso."
+            title="¿Qué hablan en el grupo?."
+            lead="En el Chat de Administración se compartieron datos personales y hay accesos que podrían estar desactualizados."
             caseLabel="Caso 2 · Comunicación y acceso"
             caseTitle="Una conversación que parecía rutinaria."
-            description="Carolina está reorganizando turnos y comparte una planilla de personal. Lee lo que ocurrió, revisa quiénes siguen en el grupo y comprueba qué información quedó disponible."
-            steps={[
-              'Lee los mensajes y revisa los perfiles y archivos del grupo.',
-              'Abre la planilla compartida y lleva los 7 hallazgos a AelScan.',
-              'Cuando termines, vuelve al Chat y realiza las 3 acciones disponibles.',
-            ]}
-            tools={['Chat', 'Excel', 'AelScan']}
-            metrics={[
-              { value: '4/4', label: 'Caso 1 documentado' },
-              { value: '7', label: 'nuevas evidencias' },
-              { value: '3', label: 'acciones finales' },
-            ]}
-            continueLabel="Haz clic para entrar al Caso 2"
+            description="Entra al escritorio. El tutorial te mostrará por dónde comenzar."
+            steps={[]}
+            tools={[]}
+            metrics={[]}
+            compact
+            continueLabel="Comenzar Caso 2"
             onContinue={handleNextDayLogin}
           />
         ) : gameState.currentDay === 2 ? (
           <ExperienceScreen
             theme="case2"
-            eyebrow="MedVibe · Último minuto"
-            title="Evita que este correo salga mal."
-            lead="RRHH está por enviar un aviso de pago a todo el personal. Hay tres cosas extrañas que debes encontrar antes de enviarlo."
+            title="Un correo saldrá en 30 segundos."
+            lead="RRHH programó un envío masivo. Hay tres riesgos que deben corregirse antes de que termine la cuenta regresiva."
             caseLabel="Caso 3 · El correo equivocado"
-            caseTitle="Una revisión rápida antes de enviar."
-            description="Primero puedes mirar con calma. Cuando estés listo, inicia la revisión y comprueba quién lo recibirá, qué contiene y quién podrá verlo."
-            steps={[
-              'Haz clic en los destinatarios y busca una dirección extraña.',
-              'Decide si 238 personas deben ver las direcciones de los demás.',
-              'Abre los dos adjuntos y conserva solo lo necesario.',
-            ]}
-            tools={['Mail', 'Excel', 'AelScan']}
-            metrics={[
-              { value: '90 s', label: 'revisión normal' },
-              { value: '3', label: 'problemas ocultos' },
-              { value: '2', label: 'adjuntos' },
-            ]}
-            continueLabel="Haz clic para abrir el correo pendiente"
+            caseTitle="Revisa antes del envío."
+            description="Al cerrar el tutorial comenzará inmediatamente el tiempo."
+            steps={[]}
+            tools={[]}
+            metrics={[]}
+            compact
+            continueLabel="Abrir tutorial del Caso 3"
             onContinue={handleNextCase3}
           />
         ) : (
-          <ExperienceScreen
-            theme="complete"
-            eyebrow="Auditoría finalizada · Bitácora guardada"
-            title="Terminaste tu jornada."
-            lead="Revisaste tres situaciones: información compartida, accesos desactualizados y un correo programado que podía exponer datos personales."
-            caseLabel="Simulación completada"
-            caseTitle="¡Simulación completada!"
-            description="La mejor respuesta no paraliza el trabajo: reduce la exposición, deja registro y activa a quienes pueden corregir el problema."
-            result={(
-              <div className="experience-result">
-                <strong>✓ Medidas registradas</strong>
-                Los accesos, archivos y el correo programado quedaron revisados con medidas proporcionales a su finalidad y audiencia.
-              </div>
-            )}
-            steps={[
-              'Reconociste que una misma situación puede comprometer varios pilares.',
-              'Documentaste cada evidencia una sola vez y elegiste una respuesta proporcional.',
-              'Completaste acciones que una persona puede realizar o solicitar en su trabajo diario.',
-            ]}
-            tools={['Mail', 'Excel', 'Chat', 'AelScan']}
-            metrics={[
-              { value: '3/3', label: 'casos completados' },
-              { value: '14', label: 'evidencias revisadas' },
-              { value: '100%', label: 'bitácora cerrada' },
-            ]}
-            credit={{
-              name: 'Sofía Gómez',
-              label: 'AelStGermain',
-              href: 'https://github.com/AelStGermain',
-              portfolio: {
-                label: 'Ver portafolio',
-                href: 'https://aelstgermain.github.io/Aelita/',
-              },
-            }}
-            continueLabel="Haz clic para volver a jugar"
-            onContinue={() => {
+          <CompletionScreen
+            onRestart={() => {
               resetGame();
               window.dispatchEvent(new Event(SHOW_GAME_INTRO_EVENT));
               playSound.chime(gameState.soundEnabled);

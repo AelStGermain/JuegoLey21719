@@ -8,6 +8,8 @@ export type GameAction =
   | { type: 'TOGGLE_SOUND' }
   | { type: 'PROGRESS_DAY'; payload: { day: number; notifications: GameState['activeNotification']; newFlags: Record<string, any> } }
   | { type: 'SET_STATUS'; payload: GameState['workdayStatus'] }
+  | { type: 'COMPLETE_TUTORIAL'; payload: number }
+  | { type: 'ACKNOWLEDGE_CASE1_AUDIT' }
   | { type: 'SELECT_AUDIT_ELEMENT'; payload: GameState['selectedAuditElement'] }
   | { type: 'SELECT_RULE'; payload: number | null }
   | { type: 'RESET_GAME' };
@@ -72,6 +74,10 @@ export const gameStateReducer = (state: GameState, action: GameAction): GameStat
       };
 
     case 'PROGRESS_DAY': {
+      const isSequentialAdvance = action.payload.day === state.currentDay + 1 && action.payload.day <= 3;
+      if (state.workdayStatus !== 'transitioning' || !isSequentialAdvance) {
+        return state;
+      }
       const isStartingCase2 = state.currentDay !== 2 && action.payload.day === 2;
       const isStartingCase3 = state.currentDay !== 3 && action.payload.day === 3;
       return {
@@ -101,6 +107,24 @@ export const gameStateReducer = (state: GameState, action: GameAction): GameStat
       return {
         ...state,
         workdayStatus: action.payload
+      };
+
+    case 'COMPLETE_TUTORIAL':
+      return {
+        ...state,
+        flags: {
+          ...state.flags,
+          [`tutorialCase${action.payload}Seen`]: true,
+        },
+      };
+
+    case 'ACKNOWLEDGE_CASE1_AUDIT':
+      return {
+        ...state,
+        flags: {
+          ...state.flags,
+          case1AuditAcknowledged: true,
+        },
       };
 
     case 'SELECT_AUDIT_ELEMENT':

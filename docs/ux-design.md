@@ -1,9 +1,9 @@
-# UX/UI Design & Micro-interactions - AelCase
+# UX/UI Design & Micro-interactions - AelOS
 
-This document details the visual style, interactive concept, layout strategy, and micro-interactions of the AelCase environment.
+This document details the visual style, interactive concept, layout strategy, and micro-interactions of the AelOS environment.
 
 ## Design Aesthetic: "Retro-Modern Corporate Software"
-AelCase uses a clean, tactile early-2000s/late-90s OS style combined with sharp, modern product design. We avoid generic, heavy glassmorphism.
+AelOS uses a clean, tactile early-2000s/late-90s OS style combined with sharp, modern product design. We avoid generic, heavy glassmorphism.
 
 ### Visual Pillars:
 1. **Beveled Solid Surfaces**: Windows and panels use solid backgrounds with classic retro borders (double-bevel borders with highlight and shadow edges) that feel physical and structured.

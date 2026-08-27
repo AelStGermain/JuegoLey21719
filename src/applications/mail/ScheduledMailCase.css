@@ -71,7 +71,8 @@
 .case3-preflight .case3-progress-dots span { color: #606b79; }
 .case3-preflight__actions { display: flex; gap: 9px; margin-top: 7px; }
 .case3-preflight__actions button:first-child { color: #283047; background: #fff; }
-.case3-result { height: 100%; overflow-y: auto; padding: 11px 14px 14px; background: #f7f1e6; }
+.case3-result { height: 100%; display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow-y: auto; padding: 18px; background: #f7f1e6; }
+.case3-result .compliance-summary { width: min(480px, 100%); }
 .case3-result__hero { padding: 10px 13px; color: #fff; background: #257c70; border: 4px solid #202238; border-radius: 16px 6px 14px 8px; box-shadow: 5px 6px 0 #202238; }
 .case3-result--partial .case3-result__hero,.case3-result--critical .case3-result__hero { background: #966333; }
 .case3-result__hero > span { display: block; margin-top: 2px; color: #ffe66b; font-size: .56rem; font-weight: 1000; letter-spacing: .7px; }

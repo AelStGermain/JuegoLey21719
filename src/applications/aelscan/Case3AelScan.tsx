@@ -12,7 +12,6 @@ export const Case3AelScan: React.FC = () => {
     protectAudience,
     removeAttachment,
     selectArtifact,
-    resumeReview,
     retryCase3,
   } = useCase3();
   const correctedCount = getCase3CorrectedCount(state.recipients, state.attachments);
@@ -22,7 +21,6 @@ export const Case3AelScan: React.FC = () => {
   const returnToMail = () => {
     selectArtifact(null);
     openWindow('mail');
-    if (state.timerStatus === 'paused' && state.screen === 'review') resumeReview();
   };
 
   const renderContext = () => {
@@ -64,7 +62,6 @@ export const Case3AelScan: React.FC = () => {
             {payroll && <button type="button" onClick={() => { removeAttachment(payroll.id); returnToMail(); }}><Trash2 size={13} /> Retirar adjunto</button>}
             <button type="button" onClick={returnToMail}>Volver</button>
           </div>
-          {state.timerStatus === 'paused' && <em>Revisión pausada mientras lees.</em>}
         </section>
       );
     }

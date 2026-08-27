@@ -12,6 +12,8 @@ interface GameStateContextProps {
   toggleSound: () => void;
   progressDay: (day: number, notif: GameState['activeNotification'], newFlags: Record<string, any>) => void;
   setStatus: (status: GameState['workdayStatus']) => void;
+  completeTutorial: (day: number) => void;
+  acknowledgeCase1Audit: () => void;
   setSelectedAuditElement: (element: GameState['selectedAuditElement']) => void;
   setSelectedRuleId: (ruleId: number | null) => void;
   resetGame: () => void;
@@ -155,6 +157,14 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     dispatch({ type: 'SET_STATUS', payload: status });
   }, []);
 
+  const completeTutorial = useCallback((day: number) => {
+    dispatch({ type: 'COMPLETE_TUTORIAL', payload: day });
+  }, []);
+
+  const acknowledgeCase1Audit = useCallback(() => {
+    dispatch({ type: 'ACKNOWLEDGE_CASE1_AUDIT' });
+  }, []);
+
   const setSelectedAuditElement = useCallback((element: GameState['selectedAuditElement']) => {
     dispatch({ type: 'SELECT_AUDIT_ELEMENT', payload: element });
   }, []);
@@ -177,6 +187,8 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     toggleSound,
     progressDay,
     setStatus,
+    completeTutorial,
+    acknowledgeCase1Audit,
     setSelectedAuditElement,
     setSelectedRuleId,
     resetGame,
@@ -189,6 +201,8 @@ export const GameStateProvider: React.FC<{ children: ReactNode }> = ({ children 
     toggleSound,
     progressDay,
     setStatus,
+    completeTutorial,
+    acknowledgeCase1Audit,
     setSelectedAuditElement,
     setSelectedRuleId,
     resetGame,

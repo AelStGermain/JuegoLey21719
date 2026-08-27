@@ -1,5 +1,5 @@
 /*
- * AelCase comic design system
+ * AelOS comic design system
  * Presentation-only layer loaded after every application stylesheet.
  */
 
@@ -1086,7 +1086,7 @@ select {
 /* Each fictional tool keeps its own typographic personality. */
 .aelscan-app,
 .aelscan-app * {
-  font-family: var(--font-comic) !important;
+  font-family: var(--font-sans) !important;
 }
 
 .sheet-app,
@@ -1148,17 +1148,8 @@ body { line-height: 1.38; }
   flex-basis: 330px !important;
 }
 .ael-desktop > .glass-panel { right: 342px !important; }
-.aelscan-comparison {
-  height: 74px !important;
-  padding: 8px 10px !important;
-}
-.aelscan-tabs { min-height: 48px; }
-.aelscan-tabs button { min-height: 43px; font-size: .7rem !important; }
 .aelscan-content { gap: 7px !important; }
 .aelscan-app [id^='rule-card-'] { padding: 9px 10px !important; }
-.aelscan-guide-note { font-size: .77rem !important; }
-.aelscan-guide-step { padding: 8px 9px !important; }
-.aelscan-guide-step__number { width: 21px !important; height: 21px !important; font-size: .7rem !important; }
 
 .case3-guide {
   width: 300px;
@@ -1655,33 +1646,6 @@ body { line-height: 1.38; }
   border-bottom: 2px solid var(--comic-ink);
 }
 .aelscan-progress > div { border-right: 2px solid var(--comic-ink); }
-.aelscan-comparison {
-  margin: 7px 7px 5px;
-  padding: 7px 9px !important;
-  background: #fff3c7 !important;
-  border: 2.5px dashed var(--comic-ink) !important;
-  border-radius: 16px 7px 14px 9px / 8px 15px 7px 13px !important;
-  box-shadow: 3px 4px 0 rgba(32,34,56,.36);
-  transform: rotate(-.25deg);
-}
-.aelscan-tabs {
-  padding: 4px 5px 0;
-  gap: 4px;
-  background: #e9deca !important;
-  border-top: 2px solid rgba(32,34,56,.3);
-  border-bottom: 3px solid var(--comic-ink) !important;
-}
-.aelscan-tabs button {
-  margin-bottom: -2px;
-  background: var(--comic-paper) !important;
-  border: 2px solid var(--comic-ink) !important;
-  border-bottom-width: 3px !important;
-  border-radius: 13px 5px 0 0 / 8px 12px 0 0 !important;
-  box-shadow: 2px -1px 0 rgba(32,34,56,.18);
-  font-family: var(--font-display);
-  transform: rotate(-.5deg);
-}
-.aelscan-tabs button:nth-child(2) { transform: rotate(.7deg); }
 .aelscan-content { padding: 10px 9px 13px !important; }
 .aelscan-app [id^='rule-card-'] {
   position: relative;
@@ -1714,23 +1678,6 @@ body { line-height: 1.38; }
   border: 1.5px dashed rgba(32,34,56,.55);
   border-radius: 10px 4px 9px 6px / 5px 10px 4px 9px !important;
 }
-.aelscan-guide-note,
-.aelscan-guide-step {
-  border: 2.5px solid var(--comic-ink) !important;
-  border-radius: var(--comic-radius-organic-md) !important;
-  box-shadow: 3px 4px 0 var(--comic-ink);
-}
-.aelscan-guide-note { background: #e6d8ff !important; transform: rotate(-.5deg); }
-.aelscan-guide-step:nth-child(odd) { transform: rotate(.35deg); }
-.aelscan-guide-step:nth-child(even) { transform: rotate(-.35deg); }
-.aelscan-guide-step__number {
-  color: var(--comic-ink) !important;
-  background: var(--comic-green) !important;
-  border: 2px solid var(--comic-ink);
-  border-radius: 50% 42% 53% 44% !important;
-  box-shadow: 1px 2px 0 var(--comic-ink);
-}
-
 /* Chat, Sheet and Forms get controlled wobble rather than straight stacks. */
 .chat-app .app-sidebar > div:last-child > div {
   margin-top: 3px;
@@ -1868,10 +1815,6 @@ body { line-height: 1.38; }
   .mail-reading-header,
   .mail-reply-ready,
   .case-action-panel,
-  .aelscan-comparison,
-  .aelscan-tabs button,
-  .aelscan-guide-note,
-  .aelscan-guide-step,
   .chat-bubble-row > div,
   .form-title-card,
   .form-question-card,
@@ -1884,13 +1827,60 @@ body { line-height: 1.38; }
 }
 
 /* Keep spacing overrides after the organic geometry layer. */
+.case1-completion-overlay {
+  background:
+    radial-gradient(circle, rgba(255,220,78,.12) 0 2px, transparent 2.5px),
+    rgba(25,20,48,.8) !important;
+  background-size: 25px 25px, auto !important;
+  backdrop-filter: blur(6px) !important;
+}
+.case1-completion-card {
+  border: 5px solid var(--comic-ink) !important;
+  border-radius: 28px 11px 24px 15px / 15px 27px 11px 23px !important;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.12) 0 1.5px, transparent 2px),
+    linear-gradient(145deg, #54318f 0%, #7544b1 54%, #9a4ec0 100%) !important;
+  background-size: 16px 16px, auto !important;
+  box-shadow: 9px 11px 0 var(--comic-ink), 15px 18px 0 rgba(244,210,69,.32) !important;
+  font-family: var(--font-comic) !important;
+  transform: rotate(-.35deg);
+}
+.case1-completion-card::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 2px dashed rgba(255,255,255,.28);
+  border-radius: 20px 7px 18px 10px;
+  pointer-events: none;
+}
+.case1-completion-card__icon {
+  width: 65px;
+  height: 65px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  background: var(--comic-yellow);
+  border: 4px solid var(--comic-ink);
+  border-radius: 50% 43% 49% 45%;
+  box-shadow: 4px 5px 0 var(--comic-ink);
+}
+.case1-completion-card__eyebrow { color: #e5f7a9 !important; font-family: var(--font-display) !important; font-size: .76rem; }
+.case1-completion-card__title { font-family: var(--font-display); text-shadow: 3px 3px 0 rgba(32,34,56,.6); }
+.case1-completion-card__copy { color: #fff8de !important; font-weight: 700; }
+.case1-completion-card__action {
+  color: var(--comic-ink) !important;
+  background: var(--comic-yellow) !important;
+  border: 3px solid var(--comic-ink);
+  border-radius: 11px 4px 10px 6px !important;
+  box-shadow: 3px 4px 0 var(--comic-ink);
+  font-family: var(--font-display);
+}
 .ael-taskbar { height: 52px !important; }
 .window-titlebar { min-height: 44px; }
 .window-btn { width: 25px; height: 23px; }
 .ael-app .app-brandbar { min-height: 52px; }
 .mail-list-item { padding: 11px 12px !important; }
 .mail-reading-header { padding: 14px 17px 16px !important; }
-.aelscan-comparison { padding: 8px 10px !important; }
 .aelscan-app [id^='rule-card-'] { padding: 9px 10px !important; }
 
 @media (max-width: 760px) {

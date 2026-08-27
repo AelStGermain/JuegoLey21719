@@ -44,7 +44,7 @@ describe('gameStateReducer', () => {
       message: 'Filtración de planilla reportada.'
     };
 
-    const state = gameStateReducer(initialGameState, {
+    const state = gameStateReducer({ ...initialGameState, workdayStatus: 'transitioning' }, {
       type: 'PROGRESS_DAY',
       payload: {
         day: 2,
@@ -58,9 +58,52 @@ describe('gameStateReducer', () => {
     expect(state.flags.workdayProgressed).toBe(true);
   });
 
+  it('blocks jumping to a later case before completing the current one', () => {
+    const earlyAdvance = gameStateReducer(initialGameState, {
+      type: 'PROGRESS_DAY',
+      payload: { day: 2, notifications: null, newFlags: {} },
+    });
+    const skippedCase = gameStateReducer({ ...initialGameState, workdayStatus: 'transitioning' }, {
+      type: 'PROGRESS_DAY',
+      payload: { day: 3, notifications: null, newFlags: {} },
+    });
+
+    expect(earlyAdvance).toBe(initialGameState);
+    expect(skippedCase.currentDay).toBe(1);
+    expect(skippedCase.workdayStatus).toBe('transitioning');
+  });
+
+  it('records each completed tutorial in the persisted game flags', () => {
+    const case1State = gameStateReducer(initialGameState, {
+      type: 'COMPLETE_TUTORIAL',
+      payload: 1,
+    });
+    const case2State = gameStateReducer(case1State, {
+      type: 'COMPLETE_TUTORIAL',
+      payload: 2,
+    });
+
+    expect(case2State.flags.tutorialCase1Seen).toBe(true);
+    expect(case2State.flags.tutorialCase2Seen).toBe(true);
+    expect(case2State.currentDay).toBe(1);
+  });
+
+  it('acknowledges the Case 1 audit only through its explicit confirmation action', () => {
+    const evidenceOnlyState: GameState = {
+      ...initialGameState,
+      evidenceFound: ['ev-personal-rut', 'ev-sensitive-health', 'ev-sensitive-religion', 'ev-cc-leak'],
+    };
+
+    expect(evidenceOnlyState.flags.case1AuditAcknowledged).toBeUndefined();
+
+    const acknowledgedState = gameStateReducer(evidenceOnlyState, { type: 'ACKNOWLEDGE_CASE1_AUDIT' });
+    expect(acknowledgedState.flags.case1AuditAcknowledged).toBe(true);
+  });
+
   it('starts Case 2 with a clean AelScan selection and no stale Case 2 achievements', () => {
     const dirtyCase1State: GameState = {
       ...initialGameState,
+      workdayStatus: 'transitioning',
       evidenceFound: [
         'ev-cc-leak',
         'ev-ch-msg-dejala',
@@ -84,7 +127,7 @@ describe('gameStateReducer', () => {
   });
 
   it('progresses directly from Case 2 into the scheduled-mail Case 3', () => {
-    const state = gameStateReducer({ ...initialGameState, currentDay: 2 }, {
+    const state = gameStateReducer({ ...initialGameState, currentDay: 2, workdayStatus: 'transitioning' }, {
       type: 'PROGRESS_DAY',
       payload: {
         day: 3,

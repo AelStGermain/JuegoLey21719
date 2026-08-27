@@ -1,4 +1,4 @@
-# AI Design & Extensible Scanner - AelCase
+# AI Design & Extensible Scanner - AelOS
 
 This document details the architecture of **AelScan / Privacy Scanner**, including the decoupled API interfaces and the rule-based simulation of AI behaviors.
 

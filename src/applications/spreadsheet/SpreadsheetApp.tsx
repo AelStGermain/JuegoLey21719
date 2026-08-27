@@ -11,13 +11,13 @@ import {
   getRuleTokens,
   isCase2EvidenceResolved,
 } from '../../content/evidenceRules';
-import { pinEvidenceInAelScan, showAelScanRegulations } from '../../components/aelScanNavigation';
+import { pinEvidenceInAelScan } from '../../components/aelScanNavigation';
 import { scenario3 } from '../../content/scenario_3';
 import { useCase3 } from '../../game/Case3Context';
 
 export const SpreadsheetApp: React.FC = () => {
   const { state: gameState, setSelectedAuditElement } = useGameState();
-  const { state: case3State, selectArtifact, pauseForDeepReview } = useCase3();
+  const { state: case3State, selectArtifact } = useCase3();
   const [selectedCell, setSelectedCell] = useState<{ rowIdx: number; colKey: string } | null>(null);
 
   const isDay2 = gameState.currentDay === 2;
@@ -54,7 +54,6 @@ export const SpreadsheetApp: React.FC = () => {
 
     const targetElementId = 'col-' + colKey;
     if (!CASE1_INFRACTION_RULES_BY_ELEMENT[targetElementId]) return;
-    showAelScanRegulations();
     const evidenceId = evidenceMapping[colKey];
     
     // Check if this evidence is already found/documented
@@ -91,13 +90,11 @@ export const SpreadsheetApp: React.FC = () => {
   const handleWorkbookClick = () => {
     if (isDay3) {
       selectArtifact('payroll');
-      pauseForDeepReview();
       playSound.click(gameState.soundEnabled);
       return;
     }
     if (!isDay2) return;
     pinEvidenceInAelScan('ev-ch-file-agosto');
-    showAelScanRegulations();
     playSound.click(gameState.soundEnabled);
   };
 
@@ -140,7 +137,11 @@ export const SpreadsheetApp: React.FC = () => {
       {/* Main Workspace */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Table View */}
-        <div className="sheet-canvas" style={{ flex: 1, overflow: 'auto', padding: '8px', background: '#f1f5f9' }}>
+        <div
+          className="sheet-canvas"
+          data-tutorial-target={isDay2 ? 'case2-sheet' : undefined}
+          style={{ flex: 1, overflow: 'auto', padding: '8px', background: '#f1f5f9' }}
+        >
           <table
             style={{
               width: '100%',
@@ -152,7 +153,7 @@ export const SpreadsheetApp: React.FC = () => {
               borderRadius: '6px',
             }}
           >
-            <thead>
+            <thead data-tutorial-target={isDay1 ? 'case1-sheet' : undefined}>
               <tr style={{ background: '#f8fafc' }}>
                 <th
                   style={{

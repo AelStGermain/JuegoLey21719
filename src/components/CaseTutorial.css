@@ -1,0 +1,342 @@
+.case-tutorial {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  color: #25253a;
+  font-family: var(--font-sans);
+  pointer-events: auto;
+}
+
+.case-tutorial__backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 225, 98, .12) 0 2px, transparent 3px),
+    rgba(24, 20, 47, .78);
+  background-size: 24px 24px, auto;
+  backdrop-filter: blur(7px);
+}
+
+.case-tutorial__spotlight {
+  position: fixed;
+  box-sizing: border-box;
+  border: 4px solid #ffe052;
+  border-radius: 17px 8px 15px 10px;
+  box-shadow:
+    0 0 0 9999px rgba(24, 20, 47, .76),
+    6px 7px 0 #25253a,
+    0 0 0 8px rgba(255, 224, 82, .2);
+  pointer-events: none;
+}
+
+.case-tutorial__spotlight::before,
+.case-tutorial__spotlight::after {
+  content: '';
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  background: #fff7c5;
+  border: 3px solid #25253a;
+  transform: rotate(45deg);
+}
+
+.case-tutorial__spotlight::before { top: -11px; left: 16%; }
+.case-tutorial__spotlight::after { right: 12%; bottom: -12px; }
+.case-tutorial__spotlight > svg {
+  position: absolute;
+  right: -16px;
+  bottom: -18px;
+  box-sizing: content-box;
+  padding: 7px;
+  color: #25253a;
+  background: #ffe052;
+  border: 3px solid #25253a;
+  border-radius: 50%;
+  box-shadow: 3px 4px 0 #25253a;
+  animation: tutorialPointer 1.1s ease-in-out infinite;
+}
+
+.case-tutorial__card {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 19px 20px 17px;
+  background:
+    radial-gradient(circle, rgba(50, 42, 67, .07) 0 1px, transparent 1.5px),
+    #fff9ea;
+  background-size: 13px 13px;
+  border: 4px solid #25253a;
+  border-radius: 25px 11px 21px 14px;
+  box-shadow: 9px 11px 0 #25253a, 14px 17px 0 rgba(79, 49, 128, .32);
+}
+
+.case-tutorial.is-overview {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+.case-tutorial.is-overview .case-tutorial__card {
+  position: relative;
+  left: auto;
+  top: auto;
+}
+
+.case-tutorial__card::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  z-index: -1;
+  border: 1.5px dashed rgba(55, 47, 72, .22);
+  border-radius: 18px 8px 15px 9px;
+  pointer-events: none;
+}
+
+.case-tutorial__card.is-tooltip {
+  width: min(365px, calc(100vw - 32px));
+  padding: 15px 17px 14px;
+  border-radius: 18px 8px 16px 10px;
+}
+.case-tutorial__card.is-tooltip .case-tutorial__header { min-height: 38px; }
+.case-tutorial__card.is-tooltip .case-tutorial__icon {
+  width: 37px;
+  height: 37px;
+  box-shadow: 2px 3px 0 #25253a;
+}
+.case-tutorial__card.is-tooltip .case-tutorial__header small {
+  color: #6840a2;
+  font-family: var(--font-display);
+  font-size: .75rem;
+}
+.case-tutorial__card.is-tooltip .case-tutorial__progress { margin: 12px 0 11px; }
+.case-tutorial__card.is-tooltip .case-tutorial__instruction {
+  padding: 12px 13px;
+  font-size: .82rem;
+}
+.case-tutorial__card.is-tooltip .case-tutorial__footer { margin-top: 14px; }
+
+.case-tutorial__close {
+  position: absolute;
+  top: 11px;
+  right: 12px;
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #ec5a4f;
+  border: 3px solid #25253a;
+  border-radius: 50% 44% 51% 46%;
+  box-shadow: 2px 3px 0 #25253a;
+  cursor: pointer;
+  transform: rotate(3deg);
+}
+
+.case-tutorial__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 38px;
+}
+
+.case-tutorial__icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: #25253a;
+  background: #bdea62;
+  border: 3px solid #25253a;
+  border-radius: 50% 43% 48% 46%;
+  box-shadow: 3px 4px 0 #25253a;
+  transform: rotate(-4deg);
+}
+
+.case-tutorial__header div:last-child { display: grid; gap: 2px; }
+.case-tutorial__header span {
+  color: #6840a2;
+  font-family: var(--font-display);
+  font-size: .79rem;
+  font-weight: 1000;
+}
+.case-tutorial__header small {
+  color: #68707d;
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .45px;
+  text-transform: uppercase;
+}
+
+.case-tutorial__progress {
+  display: flex;
+  gap: 5px;
+  margin: 16px 0 14px;
+}
+.case-tutorial__progress i {
+  height: 7px;
+  flex: 1;
+  background: #ddd4c7;
+  border: 1.5px solid #25253a;
+  border-radius: 8px 3px 7px 4px;
+  transform: rotate(.4deg);
+}
+.case-tutorial__progress i:nth-child(even) { transform: rotate(-.7deg); }
+.case-tutorial__progress i.is-active { background: linear-gradient(90deg, #bdea62, #ffe052); }
+
+.case-tutorial__guide-title {
+  display: inline-block;
+  margin-bottom: 5px;
+  color: #6840a2;
+  font-size: .75rem;
+  transform: rotate(-.4deg);
+}
+.case-tutorial__copy h2 {
+  margin: 0;
+  color: #25253a;
+  font-family: var(--font-display);
+  font-size: 1.42rem;
+  line-height: 1.1;
+}
+.case-tutorial__copy p {
+  margin: 9px 0 12px;
+  color: #505667;
+  font-size: .88rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.case-tutorial__instruction {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  color: #293c36;
+  background: #dff3a1;
+  border: 2.5px solid #25253a;
+  border-radius: 11px 5px 10px 7px;
+  box-shadow: 3px 4px 0 #25253a;
+  transform: rotate(-.25deg);
+}
+.case-tutorial__instruction svg { flex: 0 0 auto; margin-top: 1px; }
+.case-tutorial__instruction strong { font-size: .78rem; line-height: 1.4; }
+
+.case-tutorial__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 17px;
+}
+.case-tutorial__footer > span {
+  color: #6f7480;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 1000;
+}
+.case-tutorial__footer > div { display: flex; gap: 8px; }
+.case-tutorial__button {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 13px;
+  color: #fff;
+  background: #6f49ad;
+  border: 3px solid #25253a;
+  border-radius: 10px 4px 9px 6px;
+  box-shadow: 3px 4px 0 #25253a;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: .77rem;
+  font-weight: 1000;
+}
+.case-tutorial__button.is-secondary { color: #25253a; background: #fff; }
+.case-tutorial__button:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.case-tutorial__button:active { box-shadow: 1px 1px 0 #25253a; transform: translate(2px, 2px); }
+
+@keyframes tutorialPointer {
+  0%, 100% { transform: translate(0, 0) rotate(-8deg); }
+  50% { transform: translate(-4px, -5px) rotate(-8deg); }
+}
+
+.case-progress-lock {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 4px;
+  padding: 3px;
+  background: rgba(244, 239, 225, .88);
+  border: 2px solid #303248;
+  border-radius: 9px 4px 8px 5px;
+  box-shadow: 2px 3px 0 #303248;
+}
+.case-progress-lock__item {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  color: #71717d;
+  border: 2px solid transparent;
+  border-radius: 7px 3px 6px 4px;
+  font-size: .68rem;
+  white-space: nowrap;
+  user-select: none;
+}
+.case-progress-lock__item b { font-family: var(--font-display); }
+.case-progress-lock__item.is-complete { color: #315a38; background: #dff0aa; border-color: #55764a; }
+.case-progress-lock__item.is-current {
+  color: #fff;
+  background: #704bad;
+  border-color: #303248;
+  box-shadow: 2px 2px 0 #303248;
+  transform: rotate(-.5deg);
+}
+.case-progress-lock__item.is-current > span { color: #ffe052; font-size: .58rem; }
+.case-progress-lock__item.is-locked { color: #8a8790; background: #ded9d1; border-color: #aaa3a0; opacity: .76; }
+
+.tutorial-replay-button { background: #fff5bd !important; }
+
+@media (max-width: 719px) {
+  .case-tutorial__spotlight { display: none; }
+  .case-tutorial.has-target::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(24, 20, 47, .76);
+    backdrop-filter: blur(5px);
+  }
+  .case-tutorial__card,
+  .case-tutorial.has-target .case-tutorial__card,
+  .case-tutorial.is-overview .case-tutorial__card {
+    position: fixed;
+    left: 12px !important;
+    right: 12px;
+    top: auto !important;
+    bottom: 74px !important;
+    width: auto !important;
+    max-height: calc(100vh - 96px);
+    transform: none;
+    padding: 16px 16px 14px;
+  }
+  .case-tutorial__copy h2 { font-size: 1.22rem; }
+  .case-tutorial__copy p { font-size: .82rem; }
+  .case-tutorial__instruction strong { font-size: .73rem; }
+}
+
+@media (min-width: 720px) and (max-width: 1050px) {
+  .case-progress-lock__item { min-width: 25px; justify-content: center; padding-right: 4px; padding-left: 4px; }
+  .case-progress-lock__item b { display: none; }
+  .tutorial-replay-button { width: 32px; overflow: hidden; font-size: 0 !important; padding-right: 6px !important; padding-left: 6px !important; }
+  .tutorial-replay-button svg { flex: 0 0 auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-tutorial__spotlight > svg { animation: none; }
+}
