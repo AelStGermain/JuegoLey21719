@@ -74,7 +74,7 @@ const CASE_TUTORIALS: Record<1 | 2 | 3, { label: string; steps: CaseTutorialStep
       {
         title: 'Averigua lo ocurrido en el Chat',
         description: 'Aquí las evidencias están repartidas entre mensajes, perfiles y una planilla. Debes identificarlas y después aplicar tres medidas correctivas.',
-        instruction: 'Arrastra la información (chats, planilla, etc) hacia los pilares de Privacidad en AelScan',
+        instruction: 'Une o arrastra la información (chats, planilla, etc) hacia los pilares de Privacidad en AelScan',
         icon: Search,
       },
       {
