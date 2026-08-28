@@ -39,7 +39,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onRestart }) => (
             <span><small>Código y proyectos</small>Visitar GitHub</span>
             <ExternalLink size={16} />
           </a>
-          <a className="is-portfolio" href="https://aelstgermain.github.io/Aelita/" target="_blank" rel="noreferrer">
+          <a className="is-portfolio" href="https://aelstgermain.me/" target="_blank" rel="noreferrer">
             <Sparkles size={21} />
             <span><small>Conoce mi trabajo</small>Ver portafolio</span>
             <ExternalLink size={16} />

@@ -54,7 +54,7 @@ La documentación de arquitectura, diseño de juego, experiencia de usuario y al
 Diseñado y desarrollado por **Sofía Gómez — AelStGermain**.
 
 - [GitHub](https://github.com/AelStGermain)
-- [Portafolio](https://aelstgermain.github.io/Aelita/)
+- [Portafolio](https://aelstgermain.me/)
 
 ## Uso y derechos
 
