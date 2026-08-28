@@ -25,6 +25,7 @@ import { scenario1 } from '../content/scenario_1';
 import {
   CASE1_INFRACTION_RULES_BY_ELEMENT,
   CASE2_FINDING_IDS,
+  CASE2_INFRACTION_RULES_BY_EVIDENCE,
 } from '../content/evidenceRules';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getCaseApplicationIds, getCaseProgressPosition, isApplicationAvailableInCase } from './caseApplications';
@@ -53,13 +54,18 @@ const ConnectionOverlay: React.FC<{
       const elRule = document.getElementById('rule-card-' + selectedRuleId);
       const elEvidence = document.getElementById(evidenceElementId);
 
-      if (elRule && elEvidence) {
+      if (elRule && elEvidence && elRule.getClientRects().length > 0 && elEvidence.getClientRects().length > 0) {
         const rectRule = elRule.getBoundingClientRect();
         const rectEvidence = elEvidence.getBoundingClientRect();
 
-        const x1 = rectEvidence.left + rectEvidence.width / 2;
+        // Anchor to the facing edges. This also keeps the curve correct when a
+        // player drags the evidence window past or underneath the AelScan panel.
+        const evidenceCenterX = rectEvidence.left + rectEvidence.width / 2;
+        const ruleCenterX = rectRule.left + rectRule.width / 2;
+        const evidenceIsLeftOfRule = evidenceCenterX <= ruleCenterX;
+        const x1 = evidenceIsLeftOfRule ? rectEvidence.right : rectEvidence.left;
         const y1 = rectEvidence.top + rectEvidence.height / 2;
-        const x2 = rectRule.left;
+        const x2 = evidenceIsLeftOfRule ? rectRule.left : rectRule.right;
         const y2 = rectRule.top + rectRule.height / 2;
 
         setCoords({ x1, y1, x2, y2 });
@@ -81,7 +87,9 @@ const ConnectionOverlay: React.FC<{
 
   // Let it resolve if Day 1 or Day 2
   const isConfirmedViolation =
-    CASE1_INFRACTION_RULES_BY_ELEMENT[selectedEvidence.elementId]?.includes(selectedRuleId ?? -1) ?? false;
+    CASE1_INFRACTION_RULES_BY_ELEMENT[selectedEvidence.elementId]?.includes(selectedRuleId ?? -1)
+    || CASE2_INFRACTION_RULES_BY_EVIDENCE[selectedEvidence.elementId]?.includes(selectedRuleId ?? -1)
+    || false;
 
   let laserColor = '#3b82f6'; // Fresh cyan-blue default
   if (isConfirmedViolation) {
@@ -92,10 +100,11 @@ const ConnectionOverlay: React.FC<{
   }
 
   // Calculate smooth horizontal Bezier curve
-  const dx = Math.abs(coords.x2 - coords.x1) * 0.45;
-  const cx1 = coords.x1 + dx;
+  const direction = coords.x2 >= coords.x1 ? 1 : -1;
+  const dx = Math.max(32, Math.abs(coords.x2 - coords.x1) * 0.45);
+  const cx1 = coords.x1 + direction * dx;
   const cy1 = coords.y1;
-  const cx2 = coords.x2 - dx;
+  const cx2 = coords.x2 - direction * dx;
   const cy2 = coords.y2;
   const pathData = "M " + coords.x1 + " " + coords.y1 + " C " + cx1 + " " + cy1 + " " + cx2 + " " + cy2 + " " + coords.x2 + " " + coords.y2;
 

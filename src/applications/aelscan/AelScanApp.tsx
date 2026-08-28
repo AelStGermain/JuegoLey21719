@@ -12,7 +12,10 @@ import {
   CASE2_INFRACTION_EVIDENCE_IDS,
   CASE2_INFRACTION_RULES_BY_EVIDENCE,
 } from '../../content/evidenceRules';
-import { AELSCAN_PIN_EVIDENCE_EVENT } from '../../components/aelScanNavigation';
+import {
+  AELSCAN_PIN_EVIDENCE_EVENT,
+  type AelScanPinEvidenceDetail,
+} from '../../components/aelScanNavigation';
 import Case3AelScan from './Case3AelScan';
 
 interface Pillar {
@@ -430,8 +433,6 @@ const LegacyAelScanApp: React.FC = () => {
   const [comparisonState, setComparisonState] = useState<'idle' | 'checking' | 'resolved'>('idle');
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
 
-  // Case 2 Local Multi-evidence selection state
-  const [selectedEvIds, setSelectedEvIds] = useState<string[]>([]);
   const [isDragOverCardId, setIsDragOverCardId] = useState<number | null>(null);
   const comparisonTimerRef = useRef<number | null>(null);
   const lastComparisonKeyRef = useRef<string | null>(null);
@@ -441,9 +442,9 @@ const LegacyAelScanApp: React.FC = () => {
 
   useEffect(() => {
     const pinEvidence = (event: Event) => {
-      const evidenceId = (event as CustomEvent<string>).detail;
+      const { evidenceId, sourceApp } = (event as CustomEvent<AelScanPinEvidenceDetail>).detail;
       if (isDay2 && CASE2_INFRACTION_EVIDENCE_IDS.includes(evidenceId)) {
-        setSelectedEvIds([evidenceId]);
+        setSelectedAuditElement({ sourceApp, elementId: evidenceId });
       } else {
         return;
       }
@@ -452,7 +453,7 @@ const LegacyAelScanApp: React.FC = () => {
     };
     window.addEventListener(AELSCAN_PIN_EVIDENCE_EVENT, pinEvidence);
     return () => window.removeEventListener(AELSCAN_PIN_EVIDENCE_EVENT, pinEvidence);
-  }, [isDay2]);
+  }, [isDay2, setSelectedAuditElement]);
 
   useEffect(() => {
     if (comparisonTimerRef.current !== null) {
@@ -464,7 +465,6 @@ const LegacyAelScanApp: React.FC = () => {
     setHoveredRect(null);
     setComparisonState('idle');
     setComparisonResult(null);
-    setSelectedEvIds([]);
     setIsDragOverCardId(null);
     setSelectedAuditElement(null);
     setSelectedRuleId(null);
@@ -559,15 +559,12 @@ const LegacyAelScanApp: React.FC = () => {
           } else {
             playSound.success(gameState.soundEnabled);
           }
-          // Clear selections on success
-          setSelectedEvIds([]);
         } else {
           setComparisonResult({
             result: 'unrelated',
             explanation: 'Esta evidencia sí puede documentarse, pero corresponde a otro pilar del Reglamento. Revisa la pista del artículo.'
           });
           playSound.warning(gameState.soundEnabled);
-          setSelectedEvIds([]);
         }
       } else {
         // Case 1 comparison
@@ -611,10 +608,10 @@ const LegacyAelScanApp: React.FC = () => {
     }, 600);
   }, [foundEvidence, gameState.evidenceFound, gameState.soundEnabled, isDay2, triggerNotification]);
 
-  // Case 1 supports selecting the evidence and the rule in either order.
+  // Both cases support selecting the evidence and the rule in either order.
   // The key prevents a drop from scheduling the same comparison twice.
   useEffect(() => {
-    if (isDay2 || !selectedRuleId || !selectedEvidenceId) {
+    if (!selectedRuleId || !selectedEvidenceId) {
       if (!selectedRuleId || !selectedEvidenceId) lastComparisonKeyRef.current = null;
       return;
     }
@@ -623,7 +620,7 @@ const LegacyAelScanApp: React.FC = () => {
     if (lastComparisonKeyRef.current === comparisonKey) return;
     lastComparisonKeyRef.current = comparisonKey;
     handleConfront(selectedRuleId, selectedEvidenceId);
-  }, [handleConfront, isDay2, selectedEvidenceId, selectedRuleId]);
+  }, [handleConfront, selectedEvidenceId, selectedRuleId]);
 
   const handleClearSelection = () => {
     const shouldAdvanceToReply = !isDay2
@@ -634,7 +631,6 @@ const LegacyAelScanApp: React.FC = () => {
     lastComparisonKeyRef.current = null;
     setSelectedAuditElement(null);
     setSelectedRuleId(null);
-    setSelectedEvIds([]);
     setComparisonState('idle');
     setComparisonResult(null);
 
@@ -692,7 +688,7 @@ const LegacyAelScanApp: React.FC = () => {
     if (!draggedId) return;
 
     if (isDay2 && !CASE2_INFRACTION_EVIDENCE_IDS.includes(draggedId)) {
-      setSelectedEvIds([]);
+      setSelectedAuditElement(null);
       setComparisonState('resolved');
       setComparisonResult({
         result: 'unrelated',
@@ -707,11 +703,16 @@ const LegacyAelScanApp: React.FC = () => {
 
     if (isDay2) {
       // Case 2: every draggable item is a self-sufficient infringement.
-      setSelectedEvIds([draggedId]);
-      handleConfront(ruleId, draggedId);
+      setSelectedAuditElement({
+        sourceApp: draggedId === 'ev-ch-file-agosto' ? 'spreadsheet' : 'aelchat',
+        elementId: draggedId,
+      });
     } else {
       // Case 1: Instant comparison
-      setSelectedAuditElement({ sourceApp: 'mail', elementId: draggedId });
+      setSelectedAuditElement({
+        sourceApp: draggedId.startsWith('col-') ? 'spreadsheet' : 'mail',
+        elementId: draggedId,
+      });
     }
   };
 
@@ -774,9 +775,6 @@ const LegacyAelScanApp: React.FC = () => {
                 onClick={() => {
                   const nextRuleId = isRuleSelected ? null : article.id;
                   setSelectedRuleId(nextRuleId);
-                  if (isDay2 && nextRuleId && selectedEvIds.length === 1) {
-                    handleConfront(nextRuleId, selectedEvIds[0]);
-                  }
                   playSound.click(gameState.soundEnabled);
                 }}
                 style={{

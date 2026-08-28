@@ -50,7 +50,7 @@ const restoreGameState = (initial: GameState): GameState => {
             ? 2
             : 1;
     const validStatuses: GameState['workdayStatus'][] = ['active', 'transitioning', 'finished'];
-    const validSourceApps = ['mail', 'spreadsheet'];
+    const validSourceApps: NonNullable<GameState['selectedAuditElement']>['sourceApp'][] = ['mail', 'spreadsheet', 'aelchat'];
     const savedNotification = saved.activeNotification;
     const activeNotification = savedNotification === null || (
       savedNotification

@@ -16,7 +16,7 @@ export interface WindowManagerState {
 
 export interface Evidence {
   id: string;
-  sourceApp: 'mail' | 'spreadsheet';
+  sourceApp: 'mail' | 'spreadsheet' | 'aelchat';
   targetElementId: string; // The DOM element ID or logical target
   description: string; // e.g. "CC externo"
   category: 'personal_data' | 'sensitive_data' | 'contextual_risk';
@@ -108,7 +108,7 @@ export interface GameState {
     message: string;
     appToOpen?: string;
   } | null;
-  selectedAuditElement: { sourceApp: 'mail' | 'spreadsheet'; elementId: string } | null;
+  selectedAuditElement: { sourceApp: 'mail' | 'spreadsheet' | 'aelchat'; elementId: string } | null;
   selectedRuleId: number | null;
 }
 

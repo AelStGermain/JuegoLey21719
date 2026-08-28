@@ -134,7 +134,7 @@ export const AelChatApp: React.FC = () => {
   // ────────────── DAY 2 EVIDENCE PINNING ANIMATION ──────────────
   const handleCollectEvidence = (evidenceId: string, _label: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    pinEvidenceInAelScan(evidenceId);
+    pinEvidenceInAelScan(evidenceId, 'aelchat');
     playSound.click(gameState.soundEnabled);
   };
 
@@ -447,6 +447,7 @@ export const AelChatApp: React.FC = () => {
                         transition: 'border 0.2s',
                         cursor: isDraggableEvidence ? 'grab' : isConfirmedEvidence ? 'pointer' : 'default'
                       }}
+                        id={isDraggableEvidence ? msg.evidenceId : undefined}
                         className={isDraggableEvidence ? 'draggable-evidence' : undefined}
                         draggable={isDraggableEvidence}
                         onClick={isConfirmedEvidence ? (event) => handleCollectEvidence(msg.evidenceId!, msg.evidenceLabel ?? 'Evidencia del Chat', event) : undefined}
@@ -735,6 +736,7 @@ export const AelChatApp: React.FC = () => {
 
                           {/* 1. Job profile status */}
                           <div
+                            id={selectedMemberProfile.profileEvidenceId}
                             draggable={true}
                             onDragStart={(e) => handleDragStart(e, selectedMemberProfile.profileEvidenceId!)}
                             onDragEnd={endEvidenceDrag}

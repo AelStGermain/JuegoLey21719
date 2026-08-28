@@ -94,7 +94,7 @@ export const SpreadsheetApp: React.FC = () => {
       return;
     }
     if (!isDay2) return;
-    pinEvidenceInAelScan('ev-ch-file-agosto');
+    pinEvidenceInAelScan('ev-ch-file-agosto', 'spreadsheet');
     playSound.click(gameState.soundEnabled);
   };
 
@@ -120,6 +120,7 @@ export const SpreadsheetApp: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#1e3a8a' }}>Libro:</span>
           <span
+            id={isDay2 ? 'ev-ch-file-agosto' : undefined}
             draggable={isDay2}
             onClick={handleWorkbookClick}
             onDragStart={handleWorkbookDragStart}
